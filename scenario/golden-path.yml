@@ -1,0 +1,62 @@
+# The reference scenario every stack must implement and pass.
+# Each step names the API action and the deal status expected afterwards.
+# Integration tests in every stack mirror this file exactly.
+name: golden-path
+description: Product deal from creation to seller payout, with webhooks observed.
+env: sandbox
+fixtures:
+  buyer:  { first_name: Buyer,  last_name: Kit, phone_code: SA }   # phone_number generated per run
+  seller: { first_name: Seller, last_name: Kit, phone_code: SA }
+  deal:
+    offer_type: product
+    offer_title: Starter Kit golden path
+    offer_description: Reference deal created by the Amen integration starter kit
+    offer_price: "100.00"
+    offer_delivery_fee: "0.00"
+  delivery_address:
+    district: Al Olaya
+    street: King Fahd Rd
+    building_number: "1234"
+    unit_number: "1"
+    zip_code: "12211"
+steps:
+  - id: create_customers
+    call: POST /api/v1/customers/ (x2)
+  - id: create_deal
+    call: POST /api/v1/deals/
+    expect_status: draft
+  - id: set_parties
+    call: POST /api/v1/deals/{deal}/parties/
+    expect_status: draft
+  - id: set_delivery_address
+    call: POST /api/v1/deals/{deal}/delivery-address
+    expect_status: draft
+  - id: submit
+    call: POST /api/v1/deals/{deal}/action/submit
+    expect_status: requested
+  - id: approve
+    call: POST /api/v1/deals/{deal}/action/approve
+    expect_status: payment_pending
+  - id: pay
+    call: POST /api/v1/deals/{deal}/action/make-payment-wallet
+    expect_status: paid
+    note: >
+      Requires sandbox wallet balance. If the wallet method is not available the
+      implementation must report NEEDS_TOP_UP (not a failure) and stop; the
+      remaining steps can be resumed once the deal is paid.
+  - id: execution_start
+    call: POST /api/v1/deals/{deal}/action/execution-start
+    expect_status: executing
+  - id: execution_complete
+    call: POST /api/v1/deals/{deal}/action/execution-complete
+    expect_status: executed
+  - id: complete
+    call: POST /api/v1/deals/{deal}/action/complete
+    expect_status: completed
+  - id: transfer_seller_amount
+    call: POST /api/v1/deals/{deal}/action/transfer-seller-amount
+    expect_status: completed
+secondary_scenarios:
+  cancel:   draft -> cancel (deal_party=buyer) -> canceled
+  dispute:  completed -> dispute -> disputed -> dispute-approve -> dispute_approved
+  withdraw: POST /api/v1/withdrawals/ with a linked bank account

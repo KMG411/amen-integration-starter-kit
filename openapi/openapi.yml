@@ -1,0 +1,4923 @@
+openapi: 3.1.1
+info:
+  title: Amen Platform Public API
+  version: "1.0"
+tags:
+  - name: Lookup API
+    description: Lookup API
+  - name: Account API
+    description: Account API
+  - name: Customers API
+    description: Customers API
+  - name: Deals API
+    description: Deals API
+  - name: Withdrawal API
+    description: Withdrawal API
+  - name: Webhooks API
+    description: Webhooks API
+servers:
+  - url: https://sandbox-api.amnn.sa
+    description: Sandbox API server
+  - url: https://api.amnn.sa
+    description: Live API server
+components:
+  securitySchemes:
+    apiToken:
+      type: apiKey
+      in: header
+      name: X-API-Token
+      description: API token for authentication, can be obtained from the Amen platform
+  schemas:
+    City:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+          description: Localized name
+      examples:
+        - id: 100
+          name: Riyadh
+    Page:
+      type: object
+      properties:
+        pages:
+          type: integer
+          minimum: 1
+        total:
+          type: integer
+        page:
+          type: integer
+      examples:
+        - pages: 1
+          total: 1
+          page: 0
+    PaymentMethod:
+      type: string
+      enum:
+        - applepay
+        - mada
+        - visa_master
+    DisputeReason:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+          description: Localized dispute reason name
+    DisputeResolutionReason:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+          description: Localized dispute reason name
+    CancelReason:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+          description: Localized cancel reason name
+    PaymentProvider:
+      type: string
+      enum:
+        - hyperpay
+    PaymentStatus:
+      type: string
+      enum:
+        - created
+        - paid
+        - failed
+        - expired
+        - canceled
+    PaymentSubStatus:
+      type: string
+      enum:
+        - card_invalid
+        - cvv_invalid
+        - expiry_invalid
+        - card_blocked
+        - invalid_tries_limit
+        - client_limit_exceeded
+        - insufficient_funds
+        - bin_blacklisted
+        - unknown
+    Checkout:
+      type: object
+      properties:
+        id:
+          type: integer
+        created_at:
+          type: integer
+          format: Timestamp with milliseconds
+        provider:
+          $ref: "#/components/schemas/PaymentProvider"
+        hyperpay:
+          type: object
+          properties:
+            checkout_id:
+              type: string
+        amount:
+          type: string
+          description: Amount in SAR, formatted as decimal with 2 digits (e.g. "100.00")
+      examples:
+        - id: 1
+          created_at: 1679568486000
+          provider: hyperpay
+          hyperpay:
+            checkout_id: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+          amount: "100.00"
+    Payment:
+      type: object
+      properties:
+        id:
+          type: integer
+        created_at:
+          type: integer
+          format: Timestamp with milliseconds
+        updated_at:
+          type: integer
+          format: Timestamp with milliseconds
+        provider:
+          $ref: "#/components/schemas/PaymentProvider"
+        status:
+          $ref: "#/components/schemas/PaymentStatus"
+        substatus:
+          oneOf:
+            - $ref: "#/components/schemas/PaymentSubStatus"
+            - type: "null"
+        amount:
+          type: string
+          description: Amount in SAR, formatted as decimal with 2 digits (e.g. "100.00")
+      examples:
+        - id: 1
+          created_at: 1679568486000
+          updated_at: 1679568486000
+          provider: hyperpay
+          status: paid
+          substatus: null
+          amount: "100.00"
+        - id: 2
+          created_at: 1679568486000
+          updated_at: 1679568486000
+          provider: hyperpay
+          status: failed
+          substatus: insufficient_funds
+          amount: "100.00"
+    WithdrawalStatus:
+      type: string
+      enum:
+        - submitted
+        - processing
+        - completed
+        - failed
+        - returned
+    FeeType:
+      type: string
+      enum:
+        - fixed
+        - percent
+    FeeConditions:
+      type: object
+      properties:
+        type:
+          $ref: "#/components/schemas/FeeType"
+        value:
+          type: integer
+          description: Fee value, might be amount (type=fixed) or percent (type=percent).
+            Multiplied by 100 in both cases
+        amount_min:
+          type:
+            - integer
+            - "null"
+          description: Fee value minimum amount, multiplied by 100 in both cases. This
+            value appears only for type=percent
+        amount_max:
+          type:
+            - integer
+            - "null"
+          description: Fee value minimum amount, multiplied by 100 in both cases. This
+            value appears only for type=percent
+      examples:
+        - type: percent
+          value: 100
+          amount_min: 1000
+          amount_max: 10000
+    TopUpAccount:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Account holder name
+        bank:
+          type: string
+          description: Bank name
+        account_number:
+          type: string
+          description: Bank account number
+        iban:
+          type: string
+          description: Bank account IBAN
+      examples:
+        - name: John Doe
+          bank: Al Rajhi Bank
+          account_number: "1234567890"
+          iban: SA4420000001234567891234
+    Bank:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        bic:
+          type: string
+        title:
+          type: string
+          description: Localized bank title
+      examples:
+        - id: hb1e8c9a-0869-11eb-9f01-cb90251d5fe7
+          bic: SABBSARI
+          title: Saudi British Bank
+    BankAccountStatus:
+      type: string
+      enum:
+        - added
+        - verified
+        - declined
+    BankAccount:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        created_at:
+          type: integer
+          format: Timestamp with milliseconds
+        bank:
+          $ref: "#/components/schemas/Bank"
+        iban:
+          type: string
+        proof_document:
+          type:
+            - string
+            - "null"
+          format: url
+        default:
+          type: boolean
+        status:
+          $ref: "#/components/schemas/BankAccountStatus"
+      examples:
+        - id: 1f526b38-0869-11eb-9f01-cb90251d5fe7
+          created_at: 1679568486000
+          bank:
+            id: hb1e8c9a-0869-11eb-9f01-cb90251d5fe7
+            bic: SABBSARI
+            title: Saudi British Bank
+          iban: SA4420000001234567891234
+          proof_document: https://example.com/proof_document.jpg
+          default: true
+          status: added
+    Withdrawal:
+      type: object
+      properties:
+        number:
+          type: string
+          description: Withdrawal request number
+        created_at:
+          type: integer
+          format: Timestamp with milliseconds
+        updated_at:
+          type: integer
+          format: Timestamp with milliseconds
+        execution_after:
+          type: integer
+          format: Timestamp with milliseconds
+        bank_account:
+          $ref: "#/components/schemas/BankAccount"
+        amount:
+          type: string
+          description: Amount in Saudi Riyals, formatted as decimal with 2 digits (e.g.
+            "100.00")
+        fee:
+          type: string
+          description: Withdrawal fee in Saudi Riyals, formatted as decimal with 2 digits
+            (e.g. "10.00")
+        fee_conditions:
+          $ref: "#/components/schemas/FeeConditions"
+        vat:
+          type: string
+          description: Withdrawal fee VAT in Saudi Riyals, formatted as decimal with 2
+            digits (e.g. "1.50")
+        total:
+          type: string
+          description: Final amount to withdraw in Saudi Riyals, formatted as decimal with
+            2 digits (e.g. "110.00")
+        status:
+          $ref: "#/components/schemas/WithdrawalStatus"
+      examples:
+        - number: WR-10001
+          created_at: 1679568486000
+          updated_at: 1679568486000
+          execution_after: 1679654886000
+          bank_account:
+            id: 1f526b38-0869-11eb-9f01-cb90251d5fe7
+            created_at: 1679568486000
+            bank:
+              id: hb1e8c9a-0869-11eb-9f01-cb90251d5fe7
+              bic: SABBSARI
+              title: Saudi British Bank
+            iban: SA4420000001234567891234
+            proof_document: https://example.com/proof_document.jpg
+            default: true
+            status: added
+          amount: "1000.00"
+          fee: "10.00"
+          fee_conditions:
+            type: percent
+            value: 100
+            amount_min: 1000
+            amount_max: 10000
+          vat: "1.50"
+          total: "110.00"
+          status: pending
+    WithdrawalsPage:
+      allOf:
+        - $ref: "#/components/schemas/Page"
+        - type: object
+          properties:
+            results:
+              type: array
+              items:
+                $ref: "#/components/schemas/Withdrawal"
+    AttachmentType:
+      type: string
+      enum:
+        - picture
+        - video
+        - file
+    AttachmentStatus:
+      type: string
+      enum:
+        - processing
+        - available
+    Attachment:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          $ref: "#/components/schemas/AttachmentType"
+        status:
+          $ref: "#/components/schemas/AttachmentStatus"
+        object_url:
+          type: string
+          format: url
+        object_width:
+          type: integer
+          description: Preview file width
+        object_height:
+          type: integer
+          description: Preview file height
+        preview_url:
+          type: string
+          format: url
+        preview_width:
+          type: integer
+          description: Preview file width
+        preview_height:
+          type: integer
+          description: Preview file height
+        title:
+          type:
+            - string
+            - "null"
+        filename:
+          type: string
+          description: Localized attachment name
+        size_bytes:
+          type: integer
+        duration:
+          type: integer
+        uploaded_at:
+          type: integer
+          format: Timestamp with milliseconds
+      examples:
+        - id: 1f526b38-0869-11eb-9f01-cb90251d5fe7
+          type: picture
+          status: available
+          object_url: https://example.com/picture.jpg
+          object_width: 200
+          object_height: 266
+          preview_url: https://example.com/preview.jpg
+          preview_width: 200
+          preview_height: 266
+          title: picture.png
+          filename: Attachment name
+          size_bytes: 1024
+          duration: 50
+          uploaded_at: 1679568486000
+    Error:
+      type: object
+      properties:
+        error:
+          type: array
+          items:
+            type: string
+    AccountWallet:
+      type: object
+      properties:
+        balance:
+          type: string
+          description: Total balance, including escrow and holded funds in SAR
+        available:
+          type: string
+          description: Funds available in SAR
+        escrow:
+          type: string
+          description: Funds held in escrow in SAR
+        on_hold:
+          type: string
+          description: Funds holded in SAR
+        top_up_account:
+          $ref: "#/components/schemas/TopUpAccount"
+      examples:
+        - balance: "1000.00"
+          available: "1000.00"
+          escrow: "0.00"
+          on_hold: "0.00"
+          top_up_account:
+            name: John Doe
+            bank: Al Rajhi Bank
+            account_number: "1234567890"
+            iban: SA4420000001234567891234
+    Account:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        sandbox_api_enabled:
+          type: boolean
+        live_api_enabled:
+          type: boolean
+        broker_account:
+          type: object
+          properties:
+            number:
+              type: string
+              description: Customer number in the system, human readable
+            wallet:
+              $ref: "#/components/schemas/AccountWallet"
+      examples:
+        - id: 1f526b38-0869-11eb-9f01-cb90251d5fe7
+          name: John's Electronics
+          sandbox_api_enabled: true
+          live_api_enabled: false
+          broker_account:
+            number: IC-0001
+            wallet:
+              balance: "1000.00"
+              available: "1000.00"
+              escrow: "0.00"
+              on_hold: "0.00"
+              top_up_account:
+                name: John Doe
+                bank: Al Rajhi Bank
+                account_number: "1234567890"
+                iban: SA4420000001234567891234
+    CustomerType:
+      type: string
+      enum:
+        - regular
+        - broker
+    CustomerStatus:
+      type: string
+      enum:
+        - created
+        - active
+        - inactive
+    CustomerAddress:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        city:
+          oneOf:
+            - type: "null"
+            - $ref: "#/components/schemas/City"
+        district:
+          type:
+            - string
+            - "null"
+        street:
+          type:
+            - string
+            - "null"
+        building_number:
+          type:
+            - string
+            - "null"
+        unit_number:
+          type:
+            - string
+            - "null"
+        zip_code:
+          type:
+            - string
+            - "null"
+      examples:
+        - id: 1f526b38-0869-11eb-9f01-cb90251d5fe7
+          city:
+            id: 100
+            name: Riyadh
+          district: Al Olaya
+          street: Al Olaya, Riyadh
+          building_number: "123"
+          unit_number: "456"
+          zip_code: "12345"
+    CustomerShort:
+      type: object
+      properties:
+        number:
+          type: string
+          description: Customer number in the system, human readable
+        full_name:
+          type:
+            - string
+            - "null"
+        phone:
+          type:
+            - string
+            - "null"
+          description: Phone number in the international format
+        status:
+          $ref: "#/components/schemas/CustomerStatus"
+      examples:
+        - number: IC-0001
+          full_name: John Dou
+          phone: "+966572000000"
+          status: active
+    CustomerDetails:
+      type: object
+      properties:
+        number:
+          type: string
+          description: Customer number in the system, human readable
+        first_name:
+          type:
+            - string
+            - "null"
+        last_name:
+          type:
+            - string
+            - "null"
+        phone:
+          type:
+            - string
+            - "null"
+          description: Phone number in the international format
+        phone_code:
+          type:
+            - string
+            - "null"
+        phone_number:
+          type:
+            - string
+            - "null"
+        status:
+          $ref: "#/components/schemas/CustomerStatus"
+      examples:
+        - number: IC-0001
+          first_name: John
+          last_name: Dou
+          phone: "+966572000000"
+          phone_code: SA
+          phone_number: "572000000"
+          status: active
+    CustomersPage:
+      allOf:
+        - $ref: "#/components/schemas/Page"
+        - type: object
+          properties:
+            results:
+              type: array
+              items:
+                $ref: "#/components/schemas/CustomerShort"
+      examples:
+        - pages: 1
+          total: 1
+          page: 0
+          results:
+            - number: IC-0001
+              full_name: John Dou
+              phone: "+966572000000"
+              status: active
+    OfferType:
+      type: string
+      enum:
+        - product
+        - service
+    PriceType:
+      type: string
+      enum:
+        - per_item
+        - per_hour
+        - average
+    DealPartyType:
+      type: string
+      enum:
+        - seller
+        - buyer
+        - broker
+    DealStatus:
+      type: string
+      enum:
+        - draft
+        - requested
+        - payment_pending
+        - paid
+        - executing
+        - executed
+        - completed
+        - disputed
+        - dispute_approved
+        - canceled
+        - payment_overdue
+    Category:
+      type: object
+      properties:
+        id:
+          type: string
+          format: integer
+        name:
+          type: string
+          description: Localized category name
+      examples:
+        - id: "1"
+          name: Electronics
+    DealOffer:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Offer number
+        number:
+          type: string
+          description: Offer number in the system, human readable
+        title:
+          type: string
+          description: Offer title
+        description:
+          type:
+            - string
+            - "null"
+          description: Offer description
+        type:
+          $ref: "#/components/schemas/OfferType"
+        category:
+          $ref: "#/components/schemas/Category"
+        price:
+          type: string
+          description: Offer price in Saudi Riyals
+        price_type:
+          $ref: "#/components/schemas/PriceType"
+      examples:
+        - id: "1"
+          number: OF-10001
+          title: iPhone 12 for sale
+          description: Brand new iPhone 12 for sale. Unlocked, with original box and
+            accessories.
+          type: product
+          category:
+            id: "1"
+            name: Electronics
+          price: "1000.00"
+          price_type: per_item
+    DealParty:
+      type: object
+      properties:
+        customer:
+          $ref: "#/components/schemas/CustomerShort"
+        type:
+          $ref: "#/components/schemas/DealPartyType"
+      examples:
+        - customer:
+            number: IC-0001
+            full_name: John Dou
+            phone: "+966572000000"
+            status: active
+          type: buyer
+    DealShort:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        number:
+          type: string
+          description: Deal number in the system, human readable
+        customer:
+          $ref: "#/components/schemas/CustomerShort"
+        amount:
+          type: number
+          format: float
+        status:
+          $ref: "#/components/schemas/DealStatus"
+      examples:
+        - id: 1f526b38-0869-11eb-9f01-cb90251d5fe7
+          number: ID-0001
+          customer:
+            id: 1f526b38-0869-11eb-9f01-cb90251d5fe7
+            number: IC-0001
+            full_name: John Dou
+            phone: "+966572000000"
+          amount: 1000
+          status: requested
+    DealsPage:
+      allOf:
+        - $ref: "#/components/schemas/Page"
+        - type: object
+          properties:
+            results:
+              type: array
+              items:
+                $ref: "#/components/schemas/DealShort"
+      examples:
+        - pages: 1
+          total: 1
+          page: 0
+          results:
+            - id: 1f526b38-0869-11eb-9f01-cb90251d5fe7
+              number: ID-0001
+              customer:
+                id: 1f526b38-0869-11eb-9f01-cb90251d5fe7
+                number: IC-0001
+                full_name: John Dou
+                phone: "+966572000000"
+              amount: 1000
+              status: requested
+    DealDetails:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Deal ID
+        created_at:
+          type: integer
+          format: Timestamp with milliseconds
+        updated_at:
+          type: integer
+          format: Timestamp with milliseconds
+        number:
+          type: string
+          description: Deal number in the system, human readable
+        offer:
+          $ref: "#/components/schemas/DealOffer"
+        subject_details:
+          type:
+            - string
+            - "null"
+          description: Details of the deal subject (e.g. item condition, service scope, etc
+        buyer:
+          $ref: "#/components/schemas/CustomerShort"
+        seller:
+          $ref: "#/components/schemas/CustomerShort"
+        billing_address:
+          $ref: "#/components/schemas/CustomerAddress"
+        delivery_address:
+          $ref: "#/components/schemas/CustomerAddress"
+        price:
+          type: string
+          description: Offer price in Saudi Riyals
+        delivery_fee:
+          type: string
+          description: Delivery fee in Saudi Riyals
+        buyer_fee:
+          type: string
+          description: Buyer fee in Saudi Riyals
+        seller_fee:
+          type: string
+          description: Seller fee in Saudi Riyals
+        service_fee:
+          type: string
+          description: Service fee in Saudi Riyals
+        total:
+          type: string
+          description: Total deal price in Saudi Riyals
+        seller_amount_transfered:
+          type: boolean
+        status:
+          $ref: "#/components/schemas/DealStatus"
+        dispute_reason:
+          oneOf:
+            - $ref: "#/components/schemas/DisputeReason"
+            - type: "null"
+        dispute_comment:
+          type:
+            - string
+            - "null"
+          description: Dispute comment left by buyer or seller when creating a dispute
+        dispute_attachments:
+          type: array
+          items:
+            $ref: "#/components/schemas/Attachment"
+          description: Dispute attachments uploaded by buyer or seller when creating a
+            dispute
+        dispute_resolution_reason:
+          oneOf:
+            - $ref: "#/components/schemas/DisputeResolutionReason"
+            - type: "null"
+        dispute_resolution_comment:
+          type:
+            - string
+            - "null"
+          description: Dispute resolution comment left by support team when resolving a
+            dispute
+        dispute_resolution_attachments:
+          type: array
+          items:
+            $ref: "#/components/schemas/Attachment"
+          description: Dispute resolution attachments uploaded by support team when
+            resolving a dispute
+        cancel_reason:
+          oneOf:
+            - $ref: "#/components/schemas/CancelReason"
+            - type: "null"
+        cancel_comment:
+          type:
+            - string
+            - "null"
+          description: Cancel comment left by buyer or seller when canceling a deal
+        canceled_by:
+          type: string
+          enum:
+            - buyer
+            - seller
+            - broker
+            - staff
+        payment:
+          oneOf:
+            - $ref: "#/components/schemas/Payment"
+            - type: "null"
+      examples:
+        - id: DL-10001
+          created_at: 1679568486000
+          updated_at: 1679568486000
+          number: DL-10001
+          offer:
+            id: "1"
+            number: OF-10001
+            title: iPhone 12 for sale
+            description: Brand new iPhone 12 for sale. Unlocked, with original box and
+              accessories.
+            type: product
+            category:
+              id: "1"
+              name: Electronics
+            price: "1000.00"
+            price_type: per_item
+          subject_details: The item is brand new, still in its original packaging. It has
+            never been used and is in perfect condition.
+          buyer:
+            id: 1f526b38-0869-11eb-9f01-cb90251d5fe7
+            number: IC-0001
+            full_name: John Dou
+            email: john.dou@example.com
+            phone: "+966572000000"
+            user_type: regular
+            status: active
+          seller:
+            id: 1f526b38-0869-11eb-9f01-cb90251d5fe7
+            number: IC-0001
+            full_name: John Dou
+            email: john.dou@example.com
+            phone: "+966572000000"
+            user_type: regular
+            status: active
+          billing_address:
+            id: 1
+            city:
+              id: 100
+              name: Riyadh
+            district: Al Olaya
+            street: Al Olaya, Riyadh
+            building_number: "123"
+            unit_number: "456"
+            zip_code: "12345"
+          delivery_address:
+            id: 2
+            city:
+              id: 100
+              name: Riyadh
+            district: Al Olaya
+            street: Al Olaya, Riyadh
+            building_number: "123"
+            unit_number: "456"
+            zip_code: "12345"
+          price: "1000.00"
+          delivery_fee: "50.00"
+          buyer_fee: "33.00"
+          seller_fee: "0.00"
+          service_fee: "20.00"
+          total: "1083.00"
+          status: requested
+          seller_amount_transfered: false
+          dispute_reason:
+            id: 1
+            name: Item not received
+          dispute_comment: I haven't received the item yet.
+          dispute_attachments:
+            - id: 1f526b38-0869-11eb-9f01-cb90251d5fe7
+              type: picture
+              status: available
+              object_url: https://example.com/dispute_attachment.jpg
+              object_width: 800
+              object_height: 600
+              preview_url: https://example.com/dispute_attachment_preview.jpg
+              preview_width: 200
+              preview_height: 150
+              title: Dispute Attachment
+              filename: dispute_attachment.jpg
+              size_bytes: 204800
+              duration: 0
+              uploaded_at: 1679654886000
+          dispute_resolution_reason:
+            id: 1
+            name: Item delivered to wrong address
+          dispute_resolution_comment: After investigation, we found that the item was
+            delivered to the wrong address. We are working with the delivery
+            company to resolve this issue.
+          dispute_resolution_attachments:
+            - id: 1f526b38-0869-11eb-9f01-cb90251d5fe7
+              type: picture
+              status: available
+              object_url: https://example.com/delivery_proof.jpg
+              object_width: 800
+              object_height: 600
+              preview_url: https://example.com/delivery_proof_preview.jpg
+              preview_width: 200
+              preview_height: 150
+              title: Delivery Proof
+              filename: delivery_proof.jpg
+              size_bytes: 204800
+              duration: 0
+              uploaded_at: 1679654886000
+          cancel_reason:
+            id: 1
+            name: Buyer changed mind
+          cancel_comment: I want to cancel this deal because I changed my mind.
+          canceled_by: buyer
+          payment:
+            id: 1
+            created_at: 1679568486000
+            updated_at: 1679568486000
+            provider: hyperpay
+            status: paid
+            substatus: null
+            amount: "1083.00"
+    Webhook:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        url:
+          type: string
+          format: uri
+        secret_key:
+          type:
+            - string
+            - "null"
+          description: Secret key for signing webhook payloads. Secret key is returned
+            only at the moment of webhook creation and cannot be retrieved
+            later, so make sure to save it in a secure place.
+      examples:
+        - id: 1f526b38-0869-11eb-9f01-cb90251d5fe7
+          url: https://example.com/webhook
+          secret_key: s3cr3t_k3y
+  responses:
+    UnauthorizedError:
+      description: Unauthorized
+      content:
+        application/json:
+          examples:
+            Request unauthorized:
+              value:
+                error:
+                  - request__unauthorized
+          schema:
+            $ref: "#/components/schemas/Error"
+    InternalServerError:
+      description: Internal Server error
+      content:
+        application/json:
+          examples:
+            Internal Server error:
+              value:
+                error:
+                  - internal
+          schema:
+            $ref: "#/components/schemas/Error"
+paths:
+  /api/v1/allowed-country-codes/:
+    get:
+      tags:
+        - Lookup API
+      security:
+        - apiToken: []
+      summary: Fetch allowed country codes
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    code:
+                      type: string
+                      minLength: 2
+                      maxLength: 2
+                examples:
+                  - code: SA
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              examples:
+                API token is required:
+                  value:
+                    error:
+                      - api_token__required
+                API token is not valid:
+                  value:
+                    error:
+                      - api_token__invalid
+                API is not active:
+                  value:
+                    error:
+                      - api_access__disabled
+                IP address is not whitelisted:
+                  value:
+                    error:
+                      - ip__not_whitelisted
+                API call is not allowed:
+                  value:
+                    error:
+                      - call__not_allowed
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Too many requests
+          content:
+            application/json:
+              examples:
+                Rate limit exceeded:
+                  value:
+                    error:
+                      - rate_limit__exceeded
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          $ref: "#/components/responses/InternalServerError"
+  /api/v1/cities:
+    get:
+      tags:
+        - Lookup API
+      security:
+        - apiToken: []
+      summary: List available cities (Saudi Arabia only)
+      description: This call returns Cities list in alphabet order
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/City"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              examples:
+                API token is required:
+                  value:
+                    error:
+                      - api_token__required
+                API token is not valid:
+                  value:
+                    error:
+                      - api_token__invalid
+                API is not active:
+                  value:
+                    error:
+                      - api_access__disabled
+                IP address is not whitelisted:
+                  value:
+                    error:
+                      - ip__not_whitelisted
+                API call is not allowed:
+                  value:
+                    error:
+                      - call__not_allowed
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Too many requests
+          content:
+            application/json:
+              examples:
+                Rate limit exceeded:
+                  value:
+                    error:
+                      - rate_limit__exceeded
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          $ref: "#/components/responses/InternalServerError"
+  /api/v1/categories/:
+    get:
+      tags:
+        - Lookup API
+      security:
+        - apiToken: []
+      summary: Fetch categories list
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Category"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              examples:
+                API token is required:
+                  value:
+                    error:
+                      - api_token__required
+                API token is not valid:
+                  value:
+                    error:
+                      - api_token__invalid
+                API is not active:
+                  value:
+                    error:
+                      - api_access__disabled
+                IP address is not whitelisted:
+                  value:
+                    error:
+                      - ip__not_whitelisted
+                API call is not allowed:
+                  value:
+                    error:
+                      - call__not_allowed
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Too many requests
+          content:
+            application/json:
+              examples:
+                Rate limit exceeded:
+                  value:
+                    error:
+                      - rate_limit__exceeded
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          $ref: "#/components/responses/InternalServerError"
+  /api/v1/dispute-reasons/:
+    get:
+      tags:
+        - Lookup API
+      security:
+        - apiToken: []
+      summary: Fetch dispute reasons list
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DisputeReason"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              examples:
+                API token is required:
+                  value:
+                    error:
+                      - api_token__required
+                API token is not valid:
+                  value:
+                    error:
+                      - api_token__invalid
+                API is not active:
+                  value:
+                    error:
+                      - api_access__disabled
+                IP address is not whitelisted:
+                  value:
+                    error:
+                      - ip__not_whitelisted
+                API call is not allowed:
+                  value:
+                    error:
+                      - call__not_allowed
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Too many requests
+          content:
+            application/json:
+              examples:
+                Rate limit exceeded:
+                  value:
+                    error:
+                      - rate_limit__exceeded
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          $ref: "#/components/responses/InternalServerError"
+  /api/v1/dispute-resolution-reasons/:
+    get:
+      tags:
+        - Lookup API
+      security:
+        - apiToken: []
+      summary: Fetch dispute resolution reasons list
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DisputeResolutionReason"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              examples:
+                API token is required:
+                  value:
+                    error:
+                      - api_token__required
+                API token is not valid:
+                  value:
+                    error:
+                      - api_token__invalid
+                API is not active:
+                  value:
+                    error:
+                      - api_access__disabled
+                IP address is not whitelisted:
+                  value:
+                    error:
+                      - ip__not_whitelisted
+                API call is not allowed:
+                  value:
+                    error:
+                      - call__not_allowed
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Too many requests
+          content:
+            application/json:
+              examples:
+                Rate limit exceeded:
+                  value:
+                    error:
+                      - rate_limit__exceeded
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          $ref: "#/components/responses/InternalServerError"
+  /api/v1/cancel-reasons/:
+    get:
+      tags:
+        - Lookup API
+      security:
+        - apiToken: []
+      summary: Fetch cancel reasons list
+      parameters:
+        - in: query
+          name: party_type
+          required: false
+          description: Filter reasons by party type
+          schema:
+            $ref: "#/components/schemas/DealPartyType"
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CancelReason"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              examples:
+                Party type is invalid:
+                  value:
+                    error:
+                      - party_type__invalid
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              examples:
+                API token is required:
+                  value:
+                    error:
+                      - api_token__required
+                API token is not valid:
+                  value:
+                    error:
+                      - api_token__invalid
+                API is not active:
+                  value:
+                    error:
+                      - api_access__disabled
+                IP address is not whitelisted:
+                  value:
+                    error:
+                      - ip__not_whitelisted
+                API call is not allowed:
+                  value:
+                    error:
+                      - call__not_allowed
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Too many requests
+          content:
+            application/json:
+              examples:
+                Rate limit exceeded:
+                  value:
+                    error:
+                      - rate_limit__exceeded
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          $ref: "#/components/responses/InternalServerError"
+  /api/v1/account:
+    get:
+      tags:
+        - Account API
+      security:
+        - apiToken: []
+      summary: Get account details
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Account"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              examples:
+                API token is required:
+                  value:
+                    error:
+                      - api_token__required
+                API token is not valid:
+                  value:
+                    error:
+                      - api_token__invalid
+                API is not active:
+                  value:
+                    error:
+                      - api_access__disabled
+                IP address is not whitelisted:
+                  value:
+                    error:
+                      - ip__not_whitelisted
+                API call is not allowed:
+                  value:
+                    error:
+                      - call__not_allowed
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          $ref: "#/components/responses/InternalServerError"
+  /api/v1/account/bank-accounts/:
+    get:
+      tags:
+        - Account API
+      security:
+        - apiToken: []
+      summary: Get list of linked bank accounts
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/BankAccount"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              examples:
+                API token is required:
+                  value:
+                    error:
+                      - api_token__required
+                API token is not valid:
+                  value:
+                    error:
+                      - api_token__invalid
+                API is not active:
+                  value:
+                    error:
+                      - api_access__disabled
+                IP address is not whitelisted:
+                  value:
+                    error:
+                      - ip__not_whitelisted
+                API call is not allowed:
+                  value:
+                    error:
+                      - call__not_allowed
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          $ref: "#/components/responses/InternalServerError"
+    post:
+      tags:
+        - Account API
+      security:
+        - apiToken: []
+      summary: Link new bank account
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                iban:
+                  type: string
+                proof_document:
+                  type: string
+                  format: binary
+              required:
+                - iban
+              examples:
+                - iban: SA4420000001234567891234
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BankAccount"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              examples:
+                IBAN is required:
+                  value:
+                    error:
+                      - iban__required
+                IBAN is not valid:
+                  value:
+                    error:
+                      - iban__invalid
+                IBAN is not matching with ID number:
+                  value:
+                    error:
+                      - iban__not_match
+                Bank account is closed:
+                  value:
+                    error:
+                      - iban__closed
+                Bank account is blocked:
+                  value:
+                    error:
+                      - iban__blocked
+                Bank account is in liquidation:
+                  value:
+                    error:
+                      - iban__liquidation
+                Bank account verification is not available:
+                  value:
+                    error:
+                      - iban__verification_not_available
+                Unknown bank:
+                  value:
+                    error:
+                      - bank__unknown
+                IBAN is already exists:
+                  value:
+                    error:
+                      - iban__exists
+                Proof document is not provided:
+                  value:
+                    error:
+                      - proof_document__required
+                Proof document is not valid:
+                  value:
+                    error:
+                      - proof_document__invalid
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              examples:
+                API token is required:
+                  value:
+                    error:
+                      - api_token__required
+                API token is not valid:
+                  value:
+                    error:
+                      - api_token__invalid
+                API is not active:
+                  value:
+                    error:
+                      - api_access__disabled
+                IP address is not whitelisted:
+                  value:
+                    error:
+                      - ip__not_whitelisted
+                API call is not allowed:
+                  value:
+                    error:
+                      - call__not_allowed
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          $ref: "#/components/responses/InternalServerError"
+  /api/v1/account/bank-accounts/{bank_account_id}:
+    parameters:
+      - in: path
+        name: bank_account_id
+        required: true
+        schema:
+          type: string
+          format: uuid
+    delete:
+      tags:
+        - Account API
+      security:
+        - apiToken: []
+      summary: Unlink bank account
+      responses:
+        "204":
+          description: No content
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              examples:
+                API token is required:
+                  value:
+                    error:
+                      - api_token__required
+                API token is not valid:
+                  value:
+                    error:
+                      - api_token__invalid
+                API is not active:
+                  value:
+                    error:
+                      - api_access__disabled
+                IP address is not whitelisted:
+                  value:
+                    error:
+                      - ip__not_whitelisted
+                API call is not allowed:
+                  value:
+                    error:
+                      - call__not_allowed
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              examples:
+                Bank account not found:
+                  value:
+                    error:
+                      - bank_account__not_found
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          $ref: "#/components/responses/InternalServerError"
+  /api/v1/customers/:
+    get:
+      tags:
+        - Customers API
+      security:
+        - apiToken: []
+      summary: Get list of customers
+      parameters:
+        - in: query
+          name: type
+          description: Filter out Customers, that do not match the specified Type
+          schema:
+            $ref: "#/components/schemas/CustomerType"
+        - in: query
+          name: status
+          description: Filter out Customers, that do not match the specified Status
+          schema:
+            $ref: "#/components/schemas/CustomerStatus"
+        - in: query
+          name: page
+          schema:
+            type: integer
+          required: false
+          description: Page number
+        - in: query
+          name: per_page
+          schema:
+            type: integer
+          required: false
+          description: Items per page
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomersPage"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              examples:
+                Status filter is not invalid:
+                  value:
+                    error:
+                      - status__invalid
+                "Search phrase invalid (min:1, max: 20)":
+                  value:
+                    error:
+                      - src__invalid
+                Type filter is not invalid:
+                  value:
+                    error:
+                      - type__invalid
+                Page is not valid:
+                  value:
+                    error:
+                      - page__invalid
+                Per page is not valid:
+                  value:
+                    error:
+                      - per_page__invalid
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              examples:
+                API token is required:
+                  value:
+                    error:
+                      - api_token__required
+                API token is not valid:
+                  value:
+                    error:
+                      - api_token__invalid
+                API is not active:
+                  value:
+                    error:
+                      - api_access__disabled
+                IP address is not whitelisted:
+                  value:
+                    error:
+                      - ip__not_whitelisted
+                API call is not allowed:
+                  value:
+                    error:
+                      - call__not_allowed
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Too many requests
+          content:
+            application/json:
+              examples:
+                Rate limit exceeded:
+                  value:
+                    error:
+                      - rate_limit__exceeded
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          $ref: "#/components/responses/InternalServerError"
+    post:
+      tags:
+        - Customers API
+      security:
+        - apiToken: []
+      summary: Create new Customer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                first_name:
+                  type: string
+                  description: Customer's first name
+                last_name:
+                  type: string
+                  description: Customer's last name
+                phone_code:
+                  type: string
+                  description: Phone code in the international format, e.g. "SA" for Saudi Arabia
+                phone_number:
+                  type: string
+                  description: Phone number without code, e.g. "572000000"
+              required:
+                - first_name
+                - last_name
+                - phone_code
+                - phone_number
+              example:
+                first_name: John
+                last_name: Dou
+                phone_code: SA
+                phone_number: "572000000"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerDetails"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              examples:
+                First name is required:
+                  value:
+                    error:
+                      - first_name__required
+                Last name is required:
+                  value:
+                    error:
+                      - last_name__required
+                Phone code is required:
+                  value:
+                    error:
+                      - phone_code__required
+                Phone code is not valid:
+                  value:
+                    error:
+                      - phone_code__invalid
+                Phone number is required:
+                  value:
+                    error:
+                      - phone_number__required
+                Phone number is not valid:
+                  value:
+                    error:
+                      - phone_number__invalid
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              examples:
+                API token is required:
+                  value:
+                    error:
+                      - api_token__required
+                API token is not valid:
+                  value:
+                    error:
+                      - api_token__invalid
+                API is not active:
+                  value:
+                    error:
+                      - api_access__disabled
+                IP address is not whitelisted:
+                  value:
+                    error:
+                      - ip__not_whitelisted
+                API call is not allowed:
+                  value:
+                    error:
+                      - call__not_allowed
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Too many requests
+          content:
+            application/json:
+              examples:
+                Max number of customers reached:
+                  value:
+                    error:
+                      - customer__limit_reached
+                Rate limit exceeded:
+                  value:
+                    error:
+                      - rate_limit__exceeded
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          $ref: "#/components/responses/InternalServerError"
+  /api/v1/customers/{customer_number}:
+    parameters:
+      - in: path
+        name: customer_number
+        required: true
+        schema:
+          type: string
+        description: Customer number in the system, human readable, e.g. "IC-0001"
+    get:
+      tags:
+        - Customers API
+      security:
+        - apiToken: []
+      summary: Get Customer details by customer number
+      description: API returns only Customers, linked to current account
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerDetails"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              examples:
+                API token is required:
+                  value:
+                    error:
+                      - api_token__required
+                API token is not valid:
+                  value:
+                    error:
+                      - api_token__invalid
+                API is not active:
+                  value:
+                    error:
+                      - api_access__disabled
+                IP address is not whitelisted:
+                  value:
+                    error:
+                      - ip__not_whitelisted
+                API call is not allowed:
+                  value:
+                    error:
+                      - call__not_allowed
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              examples:
+                Customer with specified number does not exist:
+                  value:
+                    error:
+                      - customer__not_found
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Too many requests
+          content:
+            application/json:
+              examples:
+                Rate limit exceeded:
+                  value:
+                    error:
+                      - rate_limit__exceeded
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          $ref: "#/components/responses/InternalServerError"
+  /api/v1/deals/:
+    get:
+      tags:
+        - Deals API
+      security:
+        - apiToken: []
+      summary: Get list of Deals, linked to current account
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+          required: false
+          description: Page number
+        - in: query
+          name: per_page
+          schema:
+            type: integer
+          required: false
+          description: Items per page
+        - name: status
+          in: query
+          schema:
+            $ref: "#/components/schemas/DealStatus"
+          description: Filter by deal status
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+          description: Page number for pagination (default is 1)
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+          description: Number of items per page for pagination (default is 20, maximum is
+            100)
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DealsPage"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              examples:
+                Status filter is not invalid:
+                  value:
+                    error:
+                      - status__invalid
+                Page is not valid:
+                  value:
+                    error:
+                      - page__invalid
+                Per page is not valid:
+                  value:
+                    error:
+                      - per_page__invalid
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              examples:
+                API token is required:
+                  value:
+                    error:
+                      - api_token__required
+                API token is not valid:
+                  value:
+                    error:
+                      - api_token__invalid
+                API is not active:
+                  value:
+                    error:
+                      - api_access__disabled
+                IP address is not whitelisted:
+                  value:
+                    error:
+                      - ip__not_whitelisted
+                API call is not allowed:
+                  value:
+                    error:
+                      - call__not_allowed
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Too many requests
+          content:
+            application/json:
+              examples:
+                Rate limit exceeded:
+                  value:
+                    error:
+                      - rate_limit__exceeded
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          $ref: "#/components/responses/InternalServerError"
+    post:
+      tags:
+        - Deals API
+      security:
+        - apiToken: []
+      summary: Create new Deal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                offer_type:
+                  $ref: "#/components/schemas/OfferType"
+                  description: Offer type
+                offer_category:
+                  type: integer
+                  description: Offer category ID
+                offer_title:
+                  type: string
+                  description: Offer title
+                offer_description:
+                  type: string
+                  description: Offer description
+                offer_price:
+                  type: string
+                  description: "Price in SAR, for example: 1000.00"
+                offer_delivery_fee:
+                  type: string
+                  description: Delivery fee in SAR, required if offer_type=product
+                deal_subject_details:
+                  type: string
+                  description: Details for the Deal subject, required if offer_type=service
+              required:
+                - offer_type
+                - offer_title
+                - buyer
+                - seller
+              examples:
+                - offer_type: product
+                  offer_category: 1
+                  offer_title: iPhone 13 Pro
+                  offer_description: Brand new iPhone 13 Pro for sale
+                  offer_price: "1000.00"
+                  offer_delivery_fee: "50.00"
+                - offer_type: service
+                  offer_category: 2
+                  offer_title: Plumbing work
+                  offer_description: Fixing leaking pipes in the kitchen
+                  deal_subject_details: The plumber should have at least 5 years of experience in
+                    fixing leaking pipes in kitchens.
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DealDetails"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              examples:
+                Offer type is required:
+                  value:
+                    error:
+                      - offer_type__required
+                Offer type is not valid:
+                  value:
+                    error:
+                      - offer_type__invalid
+                Offer category is not valid:
+                  value:
+                    error:
+                      - offer_category__invalid
+                Offer title is required:
+                  value:
+                    error:
+                      - offer_title__required
+                Offer title is not valid:
+                  value:
+                    error:
+                      - offer_title__invalid
+                Offer description is not valid:
+                  value:
+                    error:
+                      - offer_description__invalid
+                Offer price is required (in case offer_type=product):
+                  value:
+                    error:
+                      - offer_price__required
+                Offer price is not valid:
+                  value:
+                    error:
+                      - offer_price__invalid
+                Offer delivery fee is required (in case offer_type=product):
+                  value:
+                    error:
+                      - offer_delivery_fee__required
+                Offer delivery fee is not valid (in case offer_type=product):
+                  value:
+                    error:
+                      - offer_delivery_fee__invalid
+                Subject details are required (in case offer_type=service):
+                  value:
+                    error:
+                      - deal_subject_details__required
+                Subject details are not valid:
+                  value:
+                    error:
+                      - deal_subject_details__invalid
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              examples:
+                API token is required:
+                  value:
+                    error:
+                      - api_token__required
+                API token is not valid:
+                  value:
+                    error:
+                      - api_token__invalid
+                API is not active:
+                  value:
+                    error:
+                      - api_access__disabled
+                IP address is not whitelisted:
+                  value:
+                    error:
+                      - ip__not_whitelisted
+                API call is not allowed:
+                  value:
+                    error:
+                      - call__not_allowed
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Too many requests
+          content:
+            application/json:
+              examples:
+                Max number of deals reached:
+                  value:
+                    error:
+                      - deal__limit_reached
+                Rate limit exceeded:
+                  value:
+                    error:
+                      - rate_limit__exceeded
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          $ref: "#/components/responses/InternalServerError"
+  /api/v1/deals/{deal_number}:
+    parameters:
+      - in: path
+        name: deal_number
+        required: true
+        schema:
+          type: string
+        description: Deal number in the system, human readable, e.g. "ID-0001"
+    get:
+      tags:
+        - Deals API
+      security:
+        - apiToken: []
+      summary: Get Deal details by deal number
+      parameters:
+        - name: check_payment
+          in: path
+          required: true
+          description: Force check for payment status and return updated status in response
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DealDetails"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              examples:
+                API token is required:
+                  value:
+                    error:
+                      - api_token__required
+                API token is not valid:
+                  value:
+                    error:
+                      - api_token__invalid
+                API is not active:
+                  value:
+                    error:
+                      - api_access__disabled
+                IP address is not whitelisted:
+                  value:
+                    error:
+                      - ip__not_whitelisted
+                API call is not allowed:
+                  value:
+                    error:
+                      - call__not_allowed
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              examples:
+                Deal with specified number does not exist:
+                  value:
+                    error:
+                      - deal__not_found
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Too many requests
+          content:
+            application/json:
+              examples:
+                Rate limit exceeded:
+                  value:
+                    error:
+                      - rate_limit__exceeded
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          $ref: "#/components/responses/InternalServerError"
+    put:
+      tags:
+        - Deals API
+      security:
+        - apiToken: []
+      summary: Update Deal details by deal number
+      description: Only Deal with status draft can be updated
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                offer_category:
+                  type: integer
+                  description: Offer category ID
+                offer_title:
+                  type: string
+                  description: Offer title
+                offer_description:
+                  type: string
+                  description: Offer description
+                offer_price:
+                  type: string
+                  description: "Price in SAR, for example: 1000.00"
+                offer_delivery_fee:
+                  type: string
+                  description: Delivery fee in SAR, required if offer_type=product
+                deal_subject_details:
+                  type: string
+                  description: Details for the Deal subject, required if offer_type=service
+              required:
+                - offer_title
+                - buyer
+                - seller
+              examples:
+                - offer_category: 1
+                  offer_title: iPhone 13 Pro
+                  offer_description: Brand new iPhone 13 Pro for sale
+                  offer_price: "1000.00"
+                  offer_delivery_fee: "50.00"
+                - offer_category: 2
+                  offer_title: Plumbing work
+                  offer_description: Fixing leaking pipes in the kitchen
+                  deal_subject_details: The plumber should have at least 5 years of experience in
+                    fixing leaking pipes in kitchens.
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DealDetails"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              examples:
+                Offer category is not valid:
+                  value:
+                    error:
+                      - offer_category__invalid
+                Offer title is required:
+                  value:
+                    error:
+                      - offer_title__required
+                Offer title is not valid:
+                  value:
+                    error:
+                      - offer_title__invalid
+                Offer description is not valid:
+                  value:
+                    error:
+                      - offer_description__invalid
+                Offer price is required (in case offer_type=product):
+                  value:
+                    error:
+                      - offer_price__required
+                Offer price is not valid:
+                  value:
+                    error:
+                      - offer_price__invalid
+                Offer delivery fee is required (in case offer_type=product):
+                  value:
+                    error:
+                      - offer_delivery_fee__required
+                Offer delivery fee is not valid (in case offer_type=product):
+                  value:
+                    error:
+                      - offer_delivery_fee__invalid
+                Subject details are required (in case offer_type=service):
+                  value:
+                    error:
+                      - deal_subject_details__required
+                Subject details are not valid:
+                  value:
+                    error:
+                      - deal_subject_details__invalid
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              examples:
+                Deal with status different from draft cannot be updated:
+                  value:
+                    error:
+                      - action__not_allowed
+                API token is required:
+                  value:
+                    error:
+                      - api_token__required
+                API token is not valid:
+                  value:
+                    error:
+                      - api_token__invalid
+                API is not active:
+                  value:
+                    error:
+                      - api_access__disabled
+                IP address is not whitelisted:
+                  value:
+                    error:
+                      - ip__not_whitelisted
+                API call is not allowed:
+                  value:
+                    error:
+                      - call__not_allowed
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Too many requests
+          content:
+            application/json:
+              examples:
+                Rate limit exceeded:
+                  value:
+                    error:
+                      - rate_limit__exceeded
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          $ref: "#/components/responses/InternalServerError"
+    delete:
+      tags:
+        - Deals API
+      security:
+        - apiToken: []
+      summary: Delete Deal by deal number
+      description: Only Deal with status draft can be deleted
+      responses:
+        "204":
+          description: No content
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              examples:
+                Deal with status different from draft cannot be deleted:
+                  value:
+                    error:
+                      - action__not_allowed
+                API token is required:
+                  value:
+                    error:
+                      - api_token__required
+                API token is not valid:
+                  value:
+                    error:
+                      - api_token__invalid
+                API is not active:
+                  value:
+                    error:
+                      - api_access__disabled
+                IP address is not whitelisted:
+                  value:
+                    error:
+                      - ip__not_whitelisted
+                API call is not allowed:
+                  value:
+                    error:
+                      - call__not_allowed
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              examples:
+                Deal with specified number does not exist:
+                  value:
+                    error:
+                      - deal__not_found
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Too many requests
+          content:
+            application/json:
+              examples:
+                Rate limit exceeded:
+                  value:
+                    error:
+                      - rate_limit__exceeded
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          $ref: "#/components/responses/InternalServerError"
+  /api/v1/deals/{deal_number}/delivery-address:
+    parameters:
+      - in: path
+        name: deal_number
+        required: true
+        schema:
+          type: string
+        description: Deal number in the system, human readable, e.g. "ID-0001"
+    post:
+      tags:
+        - Deals API
+      security:
+        - apiToken: []
+      summary: Set delivery address for the Deal
+      description: Only Deal with status draft can be updated. Delivery address is
+        required for the Deal with offer type product
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                city:
+                  type: integer
+                  description: City ID for delivery address
+                district:
+                  type:
+                    - string
+                    - "null"
+                  description: District for delivery address
+                street:
+                  type:
+                    - string
+                  description: Street for delivery address
+                building_number:
+                  type:
+                    - string
+                  description: Building number for delivery address
+                unit_number:
+                  type:
+                    - string
+                  description: Unit number for delivery address
+                zip_code:
+                  type:
+                    - string
+                  description: Zip code for delivery address
+              required:
+                - city
+                - street
+                - building_number
+                - zip_code
+              examples:
+                - city_id: 1
+                  district: Al Olaya
+                  street: King Fahad
+                  building_number: "123"
+                  unit_number: 12A
+                  zip_code: "12345"
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DealDetails"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              examples:
+                City ID is required:
+                  value:
+                    error:
+                      - city__required
+                City ID is not valid:
+                  value:
+                    error:
+                      - city__invalid
+                District is not valid:
+                  value:
+                    error:
+                      - district__invalid
+                Street is required:
+                  value:
+                    error:
+                      - street__required
+                Street is not valid:
+                  value:
+                    error:
+                      - street__invalid
+                Building number is required:
+                  value:
+                    error:
+                      - building_number__required
+                Building number is not valid:
+                  value:
+                    error:
+                      - building_number__invalid
+                Unit number is not valid:
+                  value:
+                    error:
+                      - unit_number__invalid
+                Zip code is required:
+                  value:
+                    error:
+                      - zip_code__required
+                Zip code is not valid:
+                  value:
+                    error:
+                      - zip_code__invalid
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              examples:
+                Deal with status different from draft cannot be updated:
+                  value:
+                    error:
+                      - action__not_allowed
+                API token is required:
+                  value:
+                    error:
+                      - api_token__required
+                API token is not valid:
+                  value:
+                    error:
+                      - api_token__invalid
+                API is not active:
+                  value:
+                    error:
+                      - api_access__disabled
+                IP address is not whitelisted:
+                  value:
+                    error:
+                      - ip__not_whitelisted
+                API call is not allowed:
+                  value:
+                    error:
+                      - call__not_allowed
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              examples:
+                Deal with specified number does not exist:
+                  value:
+                    error:
+                      - deal__not_found
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Too many requests
+          content:
+            application/json:
+              examples:
+                Rate limit exceeded:
+                  value:
+                    error:
+                      - rate_limit__exceeded
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          $ref: "#/components/responses/InternalServerError"
+  /api/v1/deals/{deal_number}/billing-address:
+    parameters:
+      - in: path
+        name: deal_number
+        required: true
+        schema:
+          type: string
+        description: Deal number in the system, human readable, e.g. "ID-0001"
+    post:
+      tags:
+        - Deals API
+      security:
+        - apiToken: []
+      summary: Set billing address for the Deal
+      description: Only Deal with status draft can be updated. Billing address is
+        required for the Deal with offer type service
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                city:
+                  type: integer
+                  description: City ID for billing address
+                district:
+                  type:
+                    - string
+                    - "null"
+                  description: District for billing address
+                street:
+                  type:
+                    - string
+                  description: Street for billing address
+                building_number:
+                  type:
+                    - string
+                  description: Building number for billing address
+                unit_number:
+                  type:
+                    - string
+                  description: Unit number for billing address
+                zip_code:
+                  type:
+                    - string
+                  description: Zip code for billing address
+              required:
+                - city
+                - street
+                - building_number
+                - zip_code
+              examples:
+                - city_id: 1
+                  district: Al Malaz
+                  street: Prince Sultan
+                  building_number: "456"
+                  unit_number: 34B
+                  zip_code: "54321"
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DealDetails"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              examples:
+                City ID is required:
+                  value:
+                    error:
+                      - city__required
+                City ID is not valid:
+                  value:
+                    error:
+                      - city__invalid
+                District is not valid:
+                  value:
+                    error:
+                      - district__invalid
+                Street is required:
+                  value:
+                    error:
+                      - street__required
+                Street is not valid:
+                  value:
+                    error:
+                      - street__invalid
+                Building number is required:
+                  value:
+                    error:
+                      - building_number__required
+                Building number is not valid:
+                  value:
+                    error:
+                      - building_number__invalid
+                Unit number is not valid:
+                  value:
+                    error:
+                      - unit_number__invalid
+                Zip code is required:
+                  value:
+                    error:
+                      - zip_code__required
+                Zip code is not valid:
+                  value:
+                    error:
+                      - zip_code__invalid
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              examples:
+                Deal with status different from draft cannot be updated:
+                  value:
+                    error:
+                      - action__not_allowed
+                API token is required:
+                  value:
+                    error:
+                      - api_token__required
+                API token is not valid:
+                  value:
+                    error:
+                      - api_token__invalid
+                API is not active:
+                  value:
+                    error:
+                      - api_access__disabled
+                IP address is not whitelisted:
+                  value:
+                    error:
+                      - ip__not_whitelisted
+                API call is not allowed:
+                  value:
+                    error:
+                      - call__not_allowed
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              examples:
+                Deal with specified number does not exist:
+                  value:
+                    error:
+                      - deal__not_found
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Too many requests
+          content:
+            application/json:
+              examples:
+                Rate limit exceeded:
+                  value:
+                    error:
+                      - rate_limit__exceeded
+              schema:
+                $ref: "#/components/schemas/Error"
+  /api/v1/deals/{deal_number}/parties/:
+    parameters:
+      - in: path
+        name: deal_number
+        required: true
+        schema:
+          type: string
+        description: Deal number in the system, human readable, e.g. "ID-0001"
+    post:
+      tags:
+        - Deals API
+      security:
+        - apiToken: []
+      summary: Add partys to the Deal
+      description: Set/update Deal parties. Only Deal with status draft can be updated
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                sellers:
+                  type: array
+                  items:
+                    type: string
+                    description: Customer number, e.g. CUST-0001
+                buyers:
+                  type: array
+                  items:
+                    type: string
+                    description: Customer number, e.g. CUST-0001
+              required:
+                - sellers
+                - buyers
+              examples:
+                - sellers:
+                    - CUST-0001
+                  buyers:
+                    - CUST-0002
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DealDetails"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              examples:
+                Sellers list is required:
+                  value:
+                    error:
+                      - sellers__required
+                Sellers should be a list:
+                  value:
+                    error:
+                      - sellers__invalid
+                Seller (Customer) with specified number does not exist:
+                  value:
+                    error:
+                      - sellers_idx__not_found
+                Only one seller is allowed for the Deal:
+                  value:
+                    error:
+                      - sellers__limit_exceeded
+                Buyers list is required:
+                  value:
+                    error:
+                      - buyers__required
+                Buyers should be a list:
+                  value:
+                    error:
+                      - buyers__invalid
+                Buyer (Customer) with specified number does not exist:
+                  value:
+                    error:
+                      - buyers_idx__not_found
+                Buyer cannot be also a seller for the same Deal:
+                  value:
+                    error:
+                      - buyers_idx__already_added
+                Only one buyer is allowed for the Deal:
+                  value:
+                    error:
+                      - buyers__limit_exceeded
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              examples:
+                Deal with status different from draft cannot be updated:
+                  value:
+                    error:
+                      - action__not_allowed
+                API token is required:
+                  value:
+                    error:
+                      - api_token__required
+                API token is not valid:
+                  value:
+                    error:
+                      - api_token__invalid
+                API is not active:
+                  value:
+                    error:
+                      - api_access__disabled
+                IP address is not whitelisted:
+                  value:
+                    error:
+                      - ip__not_whitelisted
+                API call is not allowed:
+                  value:
+                    error:
+                      - call__not_allowed
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              examples:
+                Deal with specified number does not exist:
+                  value:
+                    error:
+                      - deal__not_found
+                Customer with specified number does not exist:
+                  value:
+                    error:
+                      - customer__not_found
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Too many requests
+          content:
+            application/json:
+              examples:
+                Rate limit exceeded:
+                  value:
+                    error:
+                      - rate_limit__exceeded
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          $ref: "#/components/responses/InternalServerError"
+  /api/v1/deals/{deal_number}/allowed-payment-methods/:
+    parameters:
+      - in: path
+        name: deal_number
+        required: true
+        schema:
+          type: string
+        description: Deal number in the system, human readable, e.g. "ID-0001"
+    get:
+      tags:
+        - Deals API
+      security:
+        - apiToken: []
+      summary: Get list of allowed payment methods for the Deal
+      description: Only Deal with status submitted or payment_pending can have allowed
+        payment methods
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  payment_methods:
+                    type: array
+                    items:
+                      type: string
+                      enum:
+                        - applepay
+                        - mada
+                        - visa_master
+                        - wallet
+                examples:
+                  - payment_methods:
+                      - applepay
+                      - mada
+                      - visa_master
+                      - wallet
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              examples:
+                Deal with status different from payment_pending cannot have allowed payment methods:
+                  value:
+                    error:
+                      - action__not_allowed
+                API token is required:
+                  value:
+                    error:
+                      - api_token__required
+                API token is not valid:
+                  value:
+                    error:
+                      - api_token__invalid
+                API is not active:
+                  value:
+                    error:
+                      - api_access__disabled
+                IP address is not whitelisted:
+                  value:
+                    error:
+                      - ip__not_whitelisted
+                API call is not allowed:
+                  value:
+                    error:
+                      - call__not_allowed
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              examples:
+                Deal with specified number does not exist:
+                  value:
+                    error:
+                      - deal__not_found
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Too many requests
+          content:
+            application/json:
+              examples:
+                Rate limit exceeded:
+                  value:
+                    error:
+                      - rate_limit__exceeded
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          $ref: "#/components/responses/InternalServerError"
+  /api/v1/deals/{deal_number}/action/submit:
+    parameters:
+      - in: path
+        name: deal_number
+        required: true
+        schema:
+          type: string
+        description: Deal number in the system, human readable, e.g. "ID-0001"
+    post:
+      tags:
+        - Deals API
+      security:
+        - apiToken: []
+      summary: Submit Deal for processing
+      description: Only Deal with status draft can be submitted
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DealDetails"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              examples:
+                Deal should have at least 1 party with role buyer:
+                  value:
+                    error:
+                      - parties__no_buyer
+                Deal should have at least 1 party with role seller:
+                  value:
+                    error:
+                      - parties__no_seller
+                Delivery address is required for the Deal with offer type product:
+                  value:
+                    error:
+                      - delivery_address__required
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              examples:
+                Deal with status different from draft cannot be submitted:
+                  value:
+                    error:
+                      - action__not_allowed
+                API token is required:
+                  value:
+                    error:
+                      - api_token__required
+                API token is not valid:
+                  value:
+                    error:
+                      - api_token__invalid
+                API is not active:
+                  value:
+                    error:
+                      - api_access__disabled
+                IP address is not whitelisted:
+                  value:
+                    error:
+                      - ip__not_whitelisted
+                API call is not allowed:
+                  value:
+                    error:
+                      - call__not_allowed
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              examples:
+                Deal with specified number does not exist:
+                  value:
+                    error:
+                      - deal__not_found
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Too many requests
+          content:
+            application/json:
+              examples:
+                Rate limit exceeded:
+                  value:
+                    error:
+                      - rate_limit__exceeded
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          $ref: "#/components/responses/InternalServerError"
+  /api/v1/deals/{deal_number}/action/approve:
+    parameters:
+      - in: path
+        name: deal_number
+        required: true
+        schema:
+          type: string
+        description: Deal number in the system, human readable, e.g. "ID-0001"
+    post:
+      tags:
+        - Deals API
+      security:
+        - apiToken: []
+      summary: Approve the Deal
+      description: Only Deal with status requested can be approved. Typically this
+        action should be performed by the seller after reviewing the Deal
+        details and accepting to proceed with it.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                price:
+                  type: string
+                  description: Final price for the Deal in SAR, required for approve action for
+                    service type Offers
+              examples:
+                - price: "4500.00"
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DealDetails"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              examples:
+                Price is required for Offer with type=service:
+                  value:
+                    error:
+                      - price__required
+                Price is not valid for Offer with type=service:
+                  value:
+                    error:
+                      - price__invalid
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              examples:
+                Deal with status different from submitted cannot be approved:
+                  value:
+                    error:
+                      - action__not_allowed
+                API token is required:
+                  value:
+                    error:
+                      - api_token__required
+                API token is not valid:
+                  value:
+                    error:
+                      - api_token__invalid
+                API is not active:
+                  value:
+                    error:
+                      - api_access__disabled
+                IP address is not whitelisted:
+                  value:
+                    error:
+                      - ip__not_whitelisted
+                API call is not allowed:
+                  value:
+                    error:
+                      - call__not_allowed
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              examples:
+                Deal with specified number does not exist:
+                  value:
+                    error:
+                      - deal__not_found
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Too many requests
+          content:
+            application/json:
+              examples:
+                Rate limit exceeded:
+                  value:
+                    error:
+                      - rate_limit__exceeded
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          $ref: "#/components/responses/InternalServerError"
+  /api/v1/deals/{deal_number}/action/make-payment-online:
+    parameters:
+      - in: path
+        name: deal_number
+        required: true
+        schema:
+          type: string
+        description: Deal number in the system, human readable, e.g. "ID-0001"
+    post:
+      tags:
+        - Deals API
+      security:
+        - apiToken: []
+      summary: Make online payment for the Deal
+      description: Only Deal with status payment_pending can be paid online
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                payment_method:
+                  $ref: "#/components/schemas/PaymentMethod"
+              required:
+                - payment_method
+              examples:
+                - payment_method: mada
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Checkout"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              examples:
+                Payment method is required:
+                  value:
+                    error:
+                      - payment_method__required
+                Payment method is not valid:
+                  value:
+                    error:
+                      - payment_method__invalid
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              examples:
+                Deal with status different from submitted cannot be paid online:
+                  value:
+                    error:
+                      - action__not_allowed
+                API token is required:
+                  value:
+                    error:
+                      - api_token__required
+                API token is not valid:
+                  value:
+                    error:
+                      - api_token__invalid
+                API is not active:
+                  value:
+                    error:
+                      - api_access__disabled
+                IP address is not whitelisted:
+                  value:
+                    error:
+                      - ip__not_whitelisted
+                API call is not allowed:
+                  value:
+                    error:
+                      - call__not_allowed
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              examples:
+                Deal with specified number does not exist:
+                  value:
+                    error:
+                      - deal__not_found
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Too many requests
+          content:
+            application/json:
+              examples:
+                Rate limit exceeded:
+                  value:
+                    error:
+                      - rate_limit__exceeded
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          $ref: "#/components/responses/InternalServerError"
+  /api/v1/deals/{deal_number}/action/make-payment-wallet:
+    parameters:
+      - in: path
+        name: deal_number
+        required: true
+        schema:
+          type: string
+        description: Deal number in the system, human readable, e.g. "ID-0001"
+    post:
+      tags:
+        - Deals API
+      security:
+        - apiToken: []
+      summary: Make payment using wallet for the Deal
+      description: Only Deal with status payment_pending can be paid using wallet.
+        This action is only allowed if wallet payment method is available for
+        the Deal.
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DealDetails"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              examples:
+                Deal with status different from submitted cannot be paid using wallet:
+                  value:
+                    error:
+                      - action__not_allowed
+                Wallet payment method is not available for the Deal:
+                  value:
+                    error:
+                      - payment_method__not_available
+                API token is required:
+                  value:
+                    error:
+                      - api_token__required
+                API token is not valid:
+                  value:
+                    error:
+                      - api_token__invalid
+                API is not active:
+                  value:
+                    error:
+                      - api_access__disabled
+                IP address is not whitelisted:
+                  value:
+                    error:
+                      - ip__not_whitelisted
+                API call is not allowed:
+                  value:
+                    error:
+                      - call__not_allowed
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              examples:
+                Deal with specified number does not exist:
+                  value:
+                    error:
+                      - deal__not_found
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Too many requests
+          content:
+            application/json:
+              examples:
+                Rate limit exceeded:
+                  value:
+                    error:
+                      - rate_limit__exceeded
+              schema:
+                $ref: "#/components/responses/InternalServerError"
+        default:
+          $ref: "#/components/responses/InternalServerError"
+  /api/v1/deals/{deal_number}/action/execution-start:
+    parameters:
+      - in: path
+        name: deal_number
+        required: true
+        schema:
+          type: string
+        description: Deal number in the system, human readable, e.g. "ID-0001"
+    post:
+      tags:
+        - Deals API
+      security:
+        - apiToken: []
+      summary: Start execution of the Deal
+      description: Only Deal with status paid can be started
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DealDetails"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              examples:
+                Deal with status different from paid cannot be started:
+                  value:
+                    error:
+                      - action__not_allowed
+                API token is required:
+                  value:
+                    error:
+                      - api_token__required
+                API token is not valid:
+                  value:
+                    error:
+                      - api_token__invalid
+                API is not active:
+                  value:
+                    error:
+                      - api_access__disabled
+                IP address is not whitelisted:
+                  value:
+                    error:
+                      - ip__not_whitelisted
+                API call is not allowed:
+                  value:
+                    error:
+                      - call__not_allowed
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              examples:
+                Deal with specified number does not exist:
+                  value:
+                    error:
+                      - deal__not_found
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Too many requests
+          content:
+            application/json:
+              examples:
+                Rate limit exceeded:
+                  value:
+                    error:
+                      - rate_limit__exceeded
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          $ref: "#/components/responses/InternalServerError"
+  /api/v1/deals/{deal_number}/action/execution-complete:
+    parameters:
+      - in: path
+        name: deal_number
+        required: true
+        schema:
+          type: string
+        description: Deal number in the system, human readable, e.g. "ID-0001"
+    post:
+      tags:
+        - Deals API
+      security:
+        - apiToken: []
+      summary: Complete execution of the Deal
+      description: Only Deal with status executing can be completed
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DealDetails"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              examples:
+                Deal with status different from executing cannot be completed:
+                  value:
+                    error:
+                      - action__not_allowed
+                API token is required:
+                  value:
+                    error:
+                      - api_token__required
+                API token is not valid:
+                  value:
+                    error:
+                      - api_token__invalid
+                API is not active:
+                  value:
+                    error:
+                      - api_access__disabled
+                IP address is not whitelisted:
+                  value:
+                    error:
+                      - ip__not_whitelisted
+                API call is not allowed:
+                  value:
+                    error:
+                      - call__not_allowed
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              examples:
+                Deal with specified number does not exist:
+                  value:
+                    error:
+                      - deal__not_found
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Too many requests
+          content:
+            application/json:
+              examples:
+                Rate limit exceeded:
+                  value:
+                    error:
+                      - rate_limit__exceeded
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          $ref: "#/components/responses/InternalServerError"
+  /api/v1/deals/{deal_number}/action/complete:
+    parameters:
+      - in: path
+        name: deal_number
+        required: true
+        schema:
+          type: string
+        description: Deal number in the system, human readable, e.g. "ID-0001"
+    post:
+      tags:
+        - Deals API
+      security:
+        - apiToken: []
+      summary: Complete the Deal
+      description: Only Deal with status executed can be completed.
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DealDetails"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              examples:
+                Deal with status different from executed cannot be completed:
+                  value:
+                    error:
+                      - action__not_allowed
+                API token is required:
+                  value:
+                    error:
+                      - api_token__required
+                API token is not valid:
+                  value:
+                    error:
+                      - api_token__invalid
+                API is not active:
+                  value:
+                    error:
+                      - api_access__disabled
+                IP address is not whitelisted:
+                  value:
+                    error:
+                      - ip__not_whitelisted
+                API call is not allowed:
+                  value:
+                    error:
+                      - call__not_allowed
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              examples:
+                Deal with specified number does not exist:
+                  value:
+                    error:
+                      - deal__not_found
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Too many requests
+          content:
+            application/json:
+              examples:
+                Rate limit exceeded:
+                  value:
+                    error:
+                      - rate_limit__exceeded
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          $ref: "#/components/responses/InternalServerError"
+  /api/v1/deals/{deal_number}/action/transfer-seller-amount:
+    parameters:
+      - in: path
+        name: deal_number
+        required: true
+        schema:
+          type: string
+        description: Deal number in the system, human readable, e.g. "ID-0001"
+    post:
+      tags:
+        - Deals API
+      security:
+        - apiToken: []
+      summary: Transfer amount to the seller for the Deal
+      description: This api works with Deal with status completed only
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DealDetails"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              examples:
+                Deal with status different from completed cannot be transferred:
+                  value:
+                    error:
+                      - action__not_allowed
+                API token is required:
+                  value:
+                    error:
+                      - api_token__required
+                API token is not valid:
+                  value:
+                    error:
+                      - api_token__invalid
+                API is not active:
+                  value:
+                    error:
+                      - api_access__disabled
+                IP address is not whitelisted:
+                  value:
+                    error:
+                      - ip__not_whitelisted
+                API call is not allowed:
+                  value:
+                    error:
+                      - call__not_allowed
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              examples:
+                Deal with specified number does not exist:
+                  value:
+                    error:
+                      - deal__not_found
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Too many requests
+          content:
+            application/json:
+              examples:
+                Rate limit exceeded:
+                  value:
+                    error:
+                      - rate_limit__exceeded
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          $ref: "#/components/responses/InternalServerError"
+  /api/v1/deals/{deal_number}/action/dispute:
+    parameters:
+      - in: path
+        name: deal_number
+        required: true
+        schema:
+          type: string
+        description: Deal number in the system, human readable, e.g. "ID-0001"
+    post:
+      tags:
+        - Deals API
+      security:
+        - apiToken: []
+      summary: Dispute the Deal
+      description: Only Deal with status completed can be disputed. Typically this
+        action should be performed by the buyer when there is an issue with the
+        product or service provided by the seller and they want to raise a
+        dispute for the Deal.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: integer
+                  description: Dispute reason ID, required for dispute action
+                comment:
+                  type: string
+                  description: Comment for dispute, required for dispute action
+                attachment_1:
+                  type: string
+                  format: binary
+                  description: Optional attachment file for dispute, can be used to attach photo
+                    or video as evidence for the dispute claim
+                attachment_2:
+                  type: string
+                  format: binary
+                  description: Optional attachment file for dispute, can be used to attach photo
+                    or video as evidence for the dispute claim
+                attachment_3:
+                  type: string
+                  format: binary
+                  description: Optional attachment file for dispute, can be used to attach photo
+                    or video as evidence for the dispute claim
+              required:
+                - reason
+                - comment
+              examples:
+                - reason: 1
+                  comment: The product is not working as expected
+                - reason: 2
+                  comment: The product is damaged
+                  attachment_1: (binary file)
+                  attachment_2: (binary file)
+                  attachment_3: (binary file)
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DealDetails"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              examples:
+                Dispute reason is required:
+                  value:
+                    error:
+                      - reason__required
+                Dispute reason is not valid:
+                  value:
+                    error:
+                      - reason__invalid
+                Dispute comment is required:
+                  value:
+                    error:
+                      - comment__required
+                Dispute comment is not valid:
+                  value:
+                    error:
+                      - comment__invalid
+                Attachment 1 file is not valid:
+                  value:
+                    error:
+                      - attachment_1__invalid
+                Attachment 1 file is too large:
+                  value:
+                    error:
+                      - attachment_1__too_large
+                Attachment 2 file is not valid:
+                  value:
+                    error:
+                      - attachment_2__invalid
+                Attachment 2 file is too large:
+                  value:
+                    error:
+                      - attachment_2__too_large
+                Attachment 3 file is not valid:
+                  value:
+                    error:
+                      - attachment_3__invalid
+                Attachment 3 file is too large:
+                  value:
+                    error:
+                      - attachment_3__too_large
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              examples:
+                Deal with status different from completed cannot be disputed:
+                  value:
+                    error:
+                      - action__not_allowed
+                API token is required:
+                  value:
+                    error:
+                      - api_token__required
+                API token is not valid:
+                  value:
+                    error:
+                      - api_token__invalid
+                API is not active:
+                  value:
+                    error:
+                      - api_access__disabled
+                IP address is not whitelisted:
+                  value:
+                    error:
+                      - ip__not_whitelisted
+                API call is not allowed:
+                  value:
+                    error:
+                      - call__not_allowed
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              examples:
+                Deal with specified number does not exist:
+                  value:
+                    error:
+                      - deal__not_found
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Too many requests
+          content:
+            application/json:
+              examples:
+                Rate limit exceeded:
+                  value:
+                    error:
+                      - rate_limit__exceeded
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          $ref: "#/components/responses/InternalServerError"
+  /api/v1/deals/{deal_number}/action/dispute-approve:
+    parameters:
+      - in: path
+        name: deal_number
+        required: true
+        schema:
+          type: string
+        description: Deal number in the system, human readable, e.g. "ID-0001"
+    post:
+      tags:
+        - Deals API
+      security:
+        - apiToken: []
+      summary: Approve dispute for the Deal
+      description: Only Deal with status disputed can be approved
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: integer
+                  description: Dispute resolution reason ID, required for dispute approve action
+                comment:
+                  type: string
+                  description: Comment for dispute resolution, required for dispute approve action
+                attachment_1:
+                  type: string
+                  format: binary
+                  description: Optional attachment file for dispute resolution, can be used to
+                    attach photo or video as evidence for the dispute resolution
+                    decision
+                attachment_2:
+                  type: string
+                  format: binary
+                  description: Optional attachment file for dispute resolution, can be used to
+                    attach photo or video as evidence for the dispute resolution
+                    decision
+                attachment_3:
+                  type: string
+                  format: binary
+                  description: Optional attachment file for dispute resolution, can be used to
+                    attach photo or video as evidence for the dispute resolution
+                    decision
+              required:
+                - reason
+                - comment
+              examples:
+                - reason: 1
+                  comment: After checking the product, we found that the claim is valid and
+                    approved the dispute
+                - reason: 2
+                  comment: After checking the product, we found that the claim is not valid and
+                    rejected the dispute
+                  attachment_1: (binary file)
+                  attachment_2: (binary file)
+                  attachment_3: (binary file)
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DealDetails"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              examples:
+                Dispute resolution reason is required:
+                  value:
+                    error:
+                      - reason__required
+                Dispute resolution reason is not valid:
+                  value:
+                    error:
+                      - reason__invalid
+                Dispute resolution comment is required:
+                  value:
+                    error:
+                      - comment__required
+                Dispute resolution comment is not valid:
+                  value:
+                    error:
+                      - comment__invalid
+                Attachment 1 file is not valid:
+                  value:
+                    error:
+                      - attachment_1__invalid
+                Attachment 1 file is too large:
+                  value:
+                    error:
+                      - attachment_1__too_large
+                Attachment 2 file is not valid:
+                  value:
+                    error:
+                      - attachment_2__invalid
+                Attachment 2 file is too large:
+                  value:
+                    error:
+                      - attachment_2__too_large
+                Attachment 3 file is not valid:
+                  value:
+                    error:
+                      - attachment_3__invalid
+                Attachment 3 file is too large:
+                  value:
+                    error:
+                      - attachment_3__too_large
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              examples:
+                Deal with status different from disputed cannot be approved:
+                  value:
+                    error:
+                      - action__not_allowed
+                API token is required:
+                  value:
+                    error:
+                      - api_token__required
+                API token is not valid:
+                  value:
+                    error:
+                      - api_token__invalid
+                API is not active:
+                  value:
+                    error:
+                      - api_access__disabled
+                IP address is not whitelisted:
+                  value:
+                    error:
+                      - ip__not_whitelisted
+                API call is not allowed:
+                  value:
+                    error:
+                      - call__not_allowed
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              examples:
+                Deal with specified number does not exist:
+                  value:
+                    error:
+                      - deal__not_found
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Too many requests
+          content:
+            application/json:
+              examples:
+                Rate limit exceeded:
+                  value:
+                    error:
+                      - rate_limit__exceeded
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          $ref: "#/components/responses/InternalServerError"
+  /api/v1/deals/{deal_number}/action/dispute-decline:
+    parameters:
+      - in: path
+        name: deal_number
+        required: true
+        schema:
+          type: string
+        description: Deal number in the system, human readable, e.g. "ID-0001"
+    post:
+      tags:
+        - Deals API
+      security:
+        - apiToken: []
+      summary: Decline dispute for the Deal
+      description: Only Deal with status disputed can be declined
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: integer
+                  description: Dispute resolution reason ID, required for dispute reject action
+                comment:
+                  type: string
+                  description: Comment for dispute resolution, required for dispute reject action
+                attachment_1:
+                  type: string
+                  format: binary
+                  description: Optional attachment file for dispute resolution, can be used to
+                    attach photo or video as evidence for the dispute resolution
+                    decision
+                attachment_2:
+                  type: string
+                  format: binary
+                  description: Optional attachment file for dispute resolution, can be used to
+                    attach photo or video as evidence for the dispute resolution
+                    decision
+                attachment_3:
+                  type: string
+                  format: binary
+                  description: Optional attachment file for dispute resolution, can be used to
+                    attach photo or video as evidence for the dispute resolution
+                    decision
+              required:
+                - reason
+                - comment
+              examples:
+                - reason: 1
+                  comment: After checking the product, we found that the claim is valid and
+                    approved the dispute
+                - reason: 2
+                  comment: After checking the product, we found that the claim is not valid and
+                    rejected the dispute
+                  attachment_1: (binary file)
+                  attachment_2: (binary file)
+                  attachment_3: (binary file)
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DealDetails"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              examples:
+                Dispute resolution reason is required:
+                  value:
+                    error:
+                      - reason__required
+                Dispute resolution reason is not valid:
+                  value:
+                    error:
+                      - reason__invalid
+                Dispute resolution comment is required:
+                  value:
+                    error:
+                      - comment__required
+                Dispute resolution comment is not valid:
+                  value:
+                    error:
+                      - comment__invalid
+                Attachment 1 file is not valid:
+                  value:
+                    error:
+                      - attachment_1__invalid
+                Attachment 1 file is too large:
+                  value:
+                    error:
+                      - attachment_1__too_large
+                Attachment 2 file is not valid:
+                  value:
+                    error:
+                      - attachment_2__invalid
+                Attachment 2 file is too large:
+                  value:
+                    error:
+                      - attachment_2__too_large
+                Attachment 3 file is not valid:
+                  value:
+                    error:
+                      - attachment_3__invalid
+                Attachment 3 file is too large:
+                  value:
+                    error:
+                      - attachment_3__too_large
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              examples:
+                Deal with status different from disputed cannot be declined:
+                  value:
+                    error:
+                      - action__not_allowed
+                API token is required:
+                  value:
+                    error:
+                      - api_token__required
+                API token is not valid:
+                  value:
+                    error:
+                      - api_token__invalid
+                API is not active:
+                  value:
+                    error:
+                      - api_access__disabled
+                IP address is not whitelisted:
+                  value:
+                    error:
+                      - ip__not_whitelisted
+                API call is not allowed:
+                  value:
+                    error:
+                      - call__not_allowed
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              examples:
+                Deal with specified number does not exist:
+                  value:
+                    error:
+                      - deal__not_found
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Too many requests
+          content:
+            application/json:
+              examples:
+                Rate limit exceeded:
+                  value:
+                    error:
+                      - rate_limit__exceeded
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          $ref: "#/components/responses/InternalServerError"
+  /api/v1/deals/{deal_number}/action/cancel:
+    parameters:
+      - in: path
+        name: deal_number
+        required: true
+        schema:
+          type: string
+        description: Deal number in the system, human readable, e.g. "ID-0001"
+    post:
+      tags:
+        - Deals API
+      security:
+        - apiToken: []
+      summary: Cancel the Deal
+      description: Only Deal with status draft, submitted, payment_pending, paid,
+        executing can be cancelled
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                deal_party:
+                  type: string
+                  enum:
+                    - buyer
+                    - seller
+                    - broker
+                  description: Party who initiates the cancellation, required for cancel action
+                reason:
+                  type: integer
+                  description: Cancel reason ID, required for cancel action
+                comment:
+                  type: string
+                  description: Comment for cancel action, required for cancel action
+              required:
+                - deal_party
+                - reason
+                - comment
+              examples:
+                - deal_party: buyer
+                  reason: 1
+                  comment: Changed my mind, I want to cancel the deal
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DealDetails"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              examples:
+                Canceling party is required:
+                  value:
+                    error:
+                      - deal_party__required
+                Canceling party is not valid:
+                  value:
+                    error:
+                      - deal_party__invalid
+                Cancel reason is required:
+                  value:
+                    error:
+                      - reason__required
+                Cancel reason is not valid:
+                  value:
+                    error:
+                      - reason__invalid
+                Cancel comment is required:
+                  value:
+                    error:
+                      - comment__required
+                Cancel comment is not valid:
+                  value:
+                    error:
+                      - comment__invalid
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              examples:
+                Deal with status different from draft, submitted, payment_pending, paid, executing cannot be cancelled:
+                  value:
+                    error:
+                      - action__not_allowed
+                API token is required:
+                  value:
+                    error:
+                      - api_token__required
+                API token is not valid:
+                  value:
+                    error:
+                      - api_token__invalid
+                API is not active:
+                  value:
+                    error:
+                      - api_access__disabled
+                IP address is not whitelisted:
+                  value:
+                    error:
+                      - ip__not_whitelisted
+                API call is not allowed:
+                  value:
+                    error:
+                      - call__not_allowed
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              examples:
+                Deal with specified number does not exist:
+                  value:
+                    error:
+                      - deal__not_found
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Too many requests
+          content:
+            application/json:
+              examples:
+                Rate limit exceeded:
+                  value:
+                    error:
+                      - rate_limit__exceeded
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          $ref: "#/components/responses/InternalServerError"
+  /api/v1/withdrawals/:
+    get:
+      tags:
+        - Withdrawal API
+      security:
+        - apiToken: []
+      summary: Get list of withdrawals
+      parameters:
+        - in: query
+          name: status
+          description: Filter withdrawals by
+          required: false
+          schema:
+            $ref: "#/components/schemas/WithdrawalStatus"
+        - in: query
+          name: date_from
+          schema:
+            type: string
+            format: yyyy-mm-dd
+          required: false
+          description: Filter by datetime (created_at)
+        - in: query
+          name: date_to
+          schema:
+            type: string
+            format: yyyy-mm-dd
+          required: false
+          description: Filter by datetime (created_at)
+        - in: query
+          name: page
+          description: Page number for pagination (default is 1)
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+        - in: query
+          name: page_size
+          description: Number of withdrawals per page (default is 20, maximum is 100)
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WithdrawalsPage"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              examples:
+                Status is not valid:
+                  value:
+                    error:
+                      - status__invalid
+                Date from is not valid:
+                  value:
+                    error:
+                      - date_from__invalid
+                Date to is not valid:
+                  value:
+                    error:
+                      - date_to__invalid
+                Page number is not valid:
+                  value:
+                    error:
+                      - page__invalid
+                Page size is not valid:
+                  value:
+                    error:
+                      - page_size__invalid
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              examples:
+                API token is required:
+                  value:
+                    error:
+                      - api_token__required
+                API token is not valid:
+                  value:
+                    error:
+                      - api_token__invalid
+                API is not active:
+                  value:
+                    error:
+                      - api_access__disabled
+                IP address is not whitelisted:
+                  value:
+                    error:
+                      - ip__not_whitelisted
+                API call is not allowed:
+                  value:
+                    error:
+                      - call__not_allowed
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          $ref: "#/components/responses/InternalServerError"
+    post:
+      tags:
+        - Withdrawal API
+      security:
+        - apiToken: []
+      summary: Create withdrawal request
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                bank_account_id:
+                  type: string
+                  format: uuid
+                amount:
+                  type: string
+                  description: Amount to withdraw in Saudi Riyals, formatted as decimal with 2
+                    digits (e.g. "100.00")
+              required:
+                - bank_account_id
+                - amount
+              example:
+                bank_account_id: 1f526b38-0869-11eb-9f01-cb90251d5fe7
+                amount: "1000.00"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Withdrawal"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              examples:
+                Bank account ID is required:
+                  value:
+                    error:
+                      - bank_account_id__required
+                Bank account ID is not valid:
+                  value:
+                    error:
+                      - bank_account_id__invalid
+                Amount is required:
+                  value:
+                    error:
+                      - amount__required
+                Amount is not valid:
+                  value:
+                    error:
+                      - amount__invalid
+                Amount is less than minimum allowed:
+                  value:
+                    error:
+                      - amount__min
+                Amount is greater than maximum allowed:
+                  value:
+                    error:
+                      - amount__max
+                Withdrawal is not allowed:
+                  value:
+                    error:
+                      - withdrawal__not_allowed
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              examples:
+                API token is required:
+                  value:
+                    error:
+                      - api_token__required
+                API token is not valid:
+                  value:
+                    error:
+                      - api_token__invalid
+                API is not active:
+                  value:
+                    error:
+                      - api_access__disabled
+                IP address is not whitelisted:
+                  value:
+                    error:
+                      - ip__not_whitelisted
+                API call is not allowed:
+                  value:
+                    error:
+                      - call__not_allowed
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          $ref: "#/components/responses/InternalServerError"
+  /api/v1/withdrawals/{withdrawal_number}:
+    parameters:
+      - in: path
+        name: withdrawal_number
+        required: true
+        schema:
+          type: string
+    get:
+      tags:
+        - Withdrawal API
+      security:
+        - apiToken: []
+      summary: Get withdrawal details
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Withdrawal"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              examples:
+                API token is required:
+                  value:
+                    error:
+                      - api_token__required
+                API token is not valid:
+                  value:
+                    error:
+                      - api_token__invalid
+                API is not active:
+                  value:
+                    error:
+                      - api_access__disabled
+                IP address is not whitelisted:
+                  value:
+                    error:
+                      - ip__not_whitelisted
+                API call is not allowed:
+                  value:
+                    error:
+                      - call__not_allowed
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              examples:
+                Withdrawal not found:
+                  value:
+                    error:
+                      - withdrawal__not_found
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          $ref: "#/components/responses/InternalServerError"
+  /api/v1/web-hooks/:
+    get:
+      tags:
+        - Webhooks API
+      security:
+        - apiToken: []
+      summary: Get list of webhooks
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Webhook"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              examples:
+                API token is required:
+                  value:
+                    error:
+                      - api_token__required
+                API token is not valid:
+                  value:
+                    error:
+                      - api_token__invalid
+                API is not active:
+                  value:
+                    error:
+                      - api_access__disabled
+                IP address is not whitelisted:
+                  value:
+                    error:
+                      - ip__not_whitelisted
+                API call is not allowed:
+                  value:
+                    error:
+                      - call__not_allowed
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          $ref: "#/components/responses/InternalServerError"
+    post:
+      tags:
+        - Webhooks API
+      security:
+        - apiToken: []
+      summary: Create a webhook
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                url:
+                  type: string
+                  format: uri
+              required:
+                - url
+              example:
+                url: https://example.com/webhook
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Webhook"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              examples:
+                URL is required:
+                  value:
+                    error:
+                      - url__required
+                URL is not valid:
+                  value:
+                    error:
+                      - url__invalid
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              examples:
+                API token is required:
+                  value:
+                    error:
+                      - api_token__required
+                API token is not valid:
+                  value:
+                    error:
+                      - api_token__invalid
+                API is not active:
+                  value:
+                    error:
+                      - api_access__disabled
+                IP address is not whitelisted:
+                  value:
+                    error:
+                      - ip__not_whitelisted
+                API call is not allowed:
+                  value:
+                    error:
+                      - call__not_allowed
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          $ref: "#/components/responses/InternalServerError"
+  /api/v1/web-hooks/{webhook_id}:
+    parameters:
+      - in: path
+        name: webhook_id
+        required: true
+        schema:
+          type: string
+          format: uuid
+    delete:
+      tags:
+        - Webhooks API
+      security:
+        - apiToken: []
+      summary: Delete a webhook
+      responses:
+        "204":
+          description: No content
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              examples:
+                API token is required:
+                  value:
+                    error:
+                      - api_token__required
+                API token is not valid:
+                  value:
+                    error:
+                      - api_token__invalid
+                API is not active:
+                  value:
+                    error:
+                      - api_access__disabled
+                IP address is not whitelisted:
+                  value:
+                    error:
+                      - ip__not_whitelisted
+                API call is not allowed:
+                  value:
+                    error:
+                      - call__not_allowed
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              examples:
+                Webhook not found:
+                  value:
+                    error:
+                      - webhook__not_found
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          $ref: "#/components/responses/InternalServerError"

@@ -1,0 +1,29 @@
+name: sandbox-nightly
+on:
+  schedule: [{ cron: "0 2 * * *" }]
+  workflow_dispatch:
+jobs:
+  python-integration:
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: python } }
+    env:
+      AMN_ENV: sandbox
+      AMN_API_KEY: ${{ secrets.AMN_SANDBOX_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11" }
+      - run: pip install -e ".[dev]"
+      - run: pytest tests/integration -q
+  typescript-integration:
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: typescript } }
+    env:
+      AMN_ENV: sandbox
+      AMN_API_KEY: ${{ secrets.AMN_SANDBOX_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: "20" }
+      - run: npm ci
+      - run: npm run test:integration

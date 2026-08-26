@@ -1,0 +1,1030 @@
+{
+	"info": {
+		"name": "Amen Platform API",
+		"description": "Amen Platform Public REST API - Full Collection\n\nDocs: https://docs.amnn.sa\n\nAuth: X-API-Token header",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"auth": {
+		"type": "apikey",
+		"apikey": [
+			{
+				"key": "key",
+				"value": "X-API-Token",
+				"type": "string"
+			},
+			{
+				"key": "value",
+				"value": "{{api_token}}",
+				"type": "string"
+			},
+			{
+				"key": "in",
+				"value": "header",
+				"type": "string"
+			}
+		]
+	},
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "https://api.amnn.sa",
+			"type": "string"
+		},
+		{
+			"key": "api_token",
+			"value": "eb5d72e8229a13077777a463831a7188201630022cd6de82b33ed4c6dad8ba0e",
+			"type": "string"
+		},
+		{
+			"key": "customer_number",
+			"value": "IC-000000006",
+			"type": "string"
+		},
+		{
+			"key": "deal_number",
+			"value": "DL-10001",
+			"type": "string"
+		},
+		{
+			"key": "bank_account_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "withdrawal_number",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "webhook_id",
+			"value": "",
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "Lookup API",
+			"item": [
+				{
+					"name": "Get Allowed Country Codes",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/allowed-country-codes/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "allowed-country-codes", ""]
+						},
+						"description": "Returns list of allowed country codes"
+					}
+				},
+				{
+					"name": "List Cities",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/cities",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "cities"]
+						},
+						"description": "Returns cities list in alphabet order (Saudi Arabia only)"
+					}
+				},
+				{
+					"name": "List Categories",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/categories/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "categories", ""]
+						},
+						"description": "Fetch categories list"
+					}
+				},
+				{
+					"name": "List Dispute Reasons",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/dispute-reasons/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "dispute-reasons", ""]
+						},
+						"description": "Fetch dispute reasons list"
+					}
+				},
+				{
+					"name": "List Dispute Resolution Reasons",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/dispute-resolution-reasons/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "dispute-resolution-reasons", ""]
+						},
+						"description": "Fetch dispute resolution reasons list"
+					}
+				},
+				{
+					"name": "List Cancel Reasons",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/cancel-reasons/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "cancel-reasons", ""],
+							"query": [
+								{
+									"key": "party_type",
+									"value": "buyer",
+									"description": "Filter by party type: seller, buyer, broker",
+									"disabled": true
+								}
+							]
+						},
+						"description": "Fetch cancel reasons list. Optional filter by party_type (seller, buyer, broker)"
+					}
+				}
+			]
+		},
+		{
+			"name": "Account API",
+			"item": [
+				{
+					"name": "Get Account Details",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/account",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "account"]
+						},
+						"description": "Get account details including wallet balance"
+					}
+				},
+				{
+					"name": "List Bank Accounts",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/account/bank-accounts/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "account", "bank-accounts", ""]
+						},
+						"description": "Get list of linked bank accounts"
+					}
+				},
+				{
+					"name": "Link New Bank Account",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "iban",
+									"value": "SA4420000001234567891234",
+									"type": "text",
+									"description": "Saudi IBAN (required)"
+								},
+								{
+									"key": "proof_document",
+									"type": "file",
+									"src": [],
+									"description": "Proof document file (optional)"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/account/bank-accounts/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "account", "bank-accounts", ""]
+						},
+						"description": "Link a new bank account using IBAN. Optionally upload a proof document."
+					}
+				},
+				{
+					"name": "Unlink Bank Account",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/account/bank-accounts/{{bank_account_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "account", "bank-accounts", "{{bank_account_id}}"]
+						},
+						"description": "Unlink a bank account by ID (UUID)"
+					}
+				}
+			]
+		},
+		{
+			"name": "Customers API",
+			"item": [
+				{
+					"name": "List Customers",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/customers/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "customers", ""],
+							"query": [
+								{
+									"key": "type",
+									"value": "regular",
+									"description": "Filter by type: regular, broker",
+									"disabled": true
+								},
+								{
+									"key": "status",
+									"value": "active",
+									"description": "Filter by status: created, active, inactive",
+									"disabled": true
+								},
+								{
+									"key": "page",
+									"value": "1",
+									"description": "Page number",
+									"disabled": true
+								},
+								{
+									"key": "per_page",
+									"value": "20",
+									"description": "Items per page",
+									"disabled": true
+								}
+							]
+						},
+						"description": "Get paginated list of customers. Supports filtering by type and status."
+					}
+				},
+				{
+					"name": "Create Customer",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    var json = pm.response.json();",
+									"    pm.collectionVariables.set('customer_number', json.number);",
+									"    console.log('Saved customer_number: ' + json.number);",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"first_name\": \"Ahmed\",\n    \"last_name\": \"Test\",\n    \"phone_code\": \"SA\",\n    \"phone_number\": \"500000002\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/customers/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "customers", ""]
+						},
+						"description": "Create a new customer. Required: first_name, last_name, phone_code, phone_number.\n\nphone_code is a 2-letter country code (e.g. SA).\nphone_number is without country code (e.g. 500000002)."
+					}
+				},
+				{
+					"name": "Get Customer Details",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/customers/{{customer_number}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "customers", "{{customer_number}}"]
+						},
+						"description": "Get customer details by customer number (e.g. IC-000000006)"
+					}
+				}
+			]
+		},
+		{
+			"name": "Deals API",
+			"item": [
+				{
+					"name": "List Deals",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/deals/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "deals", ""],
+							"query": [
+								{
+									"key": "status",
+									"value": "draft",
+									"description": "Filter by status: draft, requested, payment_pending, paid, executing, executed, completed, disputed, dispute_approved, canceled, payment_overdue",
+									"disabled": true
+								},
+								{
+									"key": "page",
+									"value": "1",
+									"description": "Page number (default: 1)",
+									"disabled": true
+								},
+								{
+									"key": "per_page",
+									"value": "20",
+									"description": "Items per page (default: 20, max: 100)",
+									"disabled": true
+								}
+							]
+						},
+						"description": "Get paginated list of deals linked to current account"
+					}
+				},
+				{
+					"name": "Create Deal (Product)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    var json = pm.response.json();",
+									"    pm.collectionVariables.set('deal_number', json.number);",
+									"    console.log('Saved deal_number: ' + json.number);",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"offer_type\": \"product\",\n    \"offer_category\": 1,\n    \"offer_title\": \"iPhone 13 Pro\",\n    \"offer_description\": \"Brand new iPhone 13 Pro for sale\",\n    \"offer_price\": \"1000.00\",\n    \"offer_delivery_fee\": \"50.00\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/deals/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "deals", ""]
+						},
+						"description": "Create a new product deal.\n\nRequired: offer_type, offer_title\nFor products: offer_price and offer_delivery_fee required\nFor services: deal_subject_details required"
+					}
+				},
+				{
+					"name": "Create Deal (Service)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    var json = pm.response.json();",
+									"    pm.collectionVariables.set('deal_number', json.number);",
+									"    console.log('Saved deal_number: ' + json.number);",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"offer_type\": \"service\",\n    \"offer_category\": 2,\n    \"offer_title\": \"Plumbing Work\",\n    \"offer_description\": \"Fixing leaking pipes in the kitchen\",\n    \"deal_subject_details\": \"The plumber should have at least 5 years of experience.\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/deals/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "deals", ""]
+						},
+						"description": "Create a new service deal.\n\nRequired: offer_type, offer_title, deal_subject_details"
+					}
+				},
+				{
+					"name": "Get Deal Details",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/deals/{{deal_number}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "deals", "{{deal_number}}"]
+						},
+						"description": "Get deal details by deal number (e.g. DL-10001)"
+					}
+				},
+				{
+					"name": "Update Deal (Draft Only)",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"offer_category\": 1,\n    \"offer_title\": \"iPhone 13 Pro - Updated\",\n    \"offer_description\": \"Updated description\",\n    \"offer_price\": \"1200.00\",\n    \"offer_delivery_fee\": \"60.00\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/deals/{{deal_number}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "deals", "{{deal_number}}"]
+						},
+						"description": "Update a deal. Only works for deals with status=draft."
+					}
+				},
+				{
+					"name": "Get Deal Delivery Address",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/deals/{{deal_number}}/delivery-address",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "deals", "{{deal_number}}", "delivery-address"]
+						}
+					}
+				},
+				{
+					"name": "Set Deal Delivery Address",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"city_id\": 100,\n    \"district\": \"Al Olaya\",\n    \"street\": \"King Fahd Road\",\n    \"building_number\": \"123\",\n    \"unit_number\": \"456\",\n    \"zip_code\": \"12345\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/deals/{{deal_number}}/delivery-address",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "deals", "{{deal_number}}", "delivery-address"]
+						}
+					}
+				},
+				{
+					"name": "Get Deal Billing Address",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/deals/{{deal_number}}/billing-address",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "deals", "{{deal_number}}", "billing-address"]
+						}
+					}
+				},
+				{
+					"name": "Set Deal Billing Address",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"city_id\": 100,\n    \"district\": \"Al Olaya\",\n    \"street\": \"King Fahd Road\",\n    \"building_number\": \"123\",\n    \"unit_number\": \"456\",\n    \"zip_code\": \"12345\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/deals/{{deal_number}}/billing-address",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "deals", "{{deal_number}}", "billing-address"]
+						}
+					}
+				},
+				{
+					"name": "Get Deal Parties",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/deals/{{deal_number}}/parties/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "deals", "{{deal_number}}", "parties", ""]
+						}
+					}
+				},
+				{
+					"name": "Add Deal Party",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"customer_number\": \"{{customer_number}}\",\n    \"type\": \"buyer\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/deals/{{deal_number}}/parties/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "deals", "{{deal_number}}", "parties", ""]
+						},
+						"description": "Add a party to the deal. Type: seller, buyer, broker"
+					}
+				},
+				{
+					"name": "Get Allowed Payment Methods",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/deals/{{deal_number}}/allowed-payment-methods/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "deals", "{{deal_number}}", "allowed-payment-methods", ""]
+						},
+						"description": "Get allowed payment methods for a deal (applepay, mada, visa_master)"
+					}
+				}
+			]
+		},
+		{
+			"name": "Deal Actions",
+			"item": [
+				{
+					"name": "Submit Deal",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/deals/{{deal_number}}/action/submit",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "deals", "{{deal_number}}", "action", "submit"]
+						},
+						"description": "Submit a draft deal for approval"
+					}
+				},
+				{
+					"name": "Approve Deal",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/deals/{{deal_number}}/action/approve",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "deals", "{{deal_number}}", "action", "approve"]
+						},
+						"description": "Approve a submitted deal"
+					}
+				},
+				{
+					"name": "Make Payment (Online)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"payment_method\": \"mada\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/deals/{{deal_number}}/action/make-payment-online",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "deals", "{{deal_number}}", "action", "make-payment-online"]
+						},
+						"description": "Make online payment. Methods: applepay, mada, visa_master"
+					}
+				},
+				{
+					"name": "Make Payment (Wallet)",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/deals/{{deal_number}}/action/make-payment-wallet",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "deals", "{{deal_number}}", "action", "make-payment-wallet"]
+						},
+						"description": "Pay for deal using wallet balance"
+					}
+				},
+				{
+					"name": "Start Execution",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/deals/{{deal_number}}/action/execution-start",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "deals", "{{deal_number}}", "action", "execution-start"]
+						},
+						"description": "Mark deal execution as started"
+					}
+				},
+				{
+					"name": "Complete Execution",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/deals/{{deal_number}}/action/execution-complete",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "deals", "{{deal_number}}", "action", "execution-complete"]
+						},
+						"description": "Mark deal execution as complete"
+					}
+				},
+				{
+					"name": "Complete Deal",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/deals/{{deal_number}}/action/complete",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "deals", "{{deal_number}}", "action", "complete"]
+						},
+						"description": "Mark deal as completed"
+					}
+				},
+				{
+					"name": "Transfer Seller Amount",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/deals/{{deal_number}}/action/transfer-seller-amount",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "deals", "{{deal_number}}", "action", "transfer-seller-amount"]
+						},
+						"description": "Transfer funds to seller"
+					}
+				},
+				{
+					"name": "Open Dispute",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"reason_id\": 1,\n    \"comment\": \"Item not received as described\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/deals/{{deal_number}}/action/dispute",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "deals", "{{deal_number}}", "action", "dispute"]
+						},
+						"description": "Open a dispute on a deal"
+					}
+				},
+				{
+					"name": "Approve Dispute",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"reason_id\": 1,\n    \"comment\": \"Dispute approved after investigation\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/deals/{{deal_number}}/action/dispute-approve",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "deals", "{{deal_number}}", "action", "dispute-approve"]
+						},
+						"description": "Approve a dispute"
+					}
+				},
+				{
+					"name": "Decline Dispute",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"reason_id\": 1,\n    \"comment\": \"Dispute declined - item was delivered\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/deals/{{deal_number}}/action/dispute-decline",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "deals", "{{deal_number}}", "action", "dispute-decline"]
+						},
+						"description": "Decline a dispute"
+					}
+				},
+				{
+					"name": "Cancel Deal",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"reason_id\": 1,\n    \"comment\": \"Canceling this deal\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/deals/{{deal_number}}/action/cancel",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "deals", "{{deal_number}}", "action", "cancel"]
+						},
+						"description": "Cancel a deal"
+					}
+				}
+			]
+		},
+		{
+			"name": "Withdrawal API",
+			"item": [
+				{
+					"name": "List Withdrawals",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/withdrawals/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "withdrawals", ""],
+							"query": [
+								{
+									"key": "status",
+									"value": "submitted",
+									"description": "Filter by status: submitted, processing, completed, failed, returned",
+									"disabled": true
+								},
+								{
+									"key": "date_from",
+									"value": "2026-01-01",
+									"description": "Filter from date (yyyy-mm-dd)",
+									"disabled": true
+								},
+								{
+									"key": "date_to",
+									"value": "2026-12-31",
+									"description": "Filter to date (yyyy-mm-dd)",
+									"disabled": true
+								},
+								{
+									"key": "page",
+									"value": "1",
+									"description": "Page number (default: 1)",
+									"disabled": true
+								},
+								{
+									"key": "page_size",
+									"value": "20",
+									"description": "Items per page (default: 20, max: 100)",
+									"disabled": true
+								}
+							]
+						},
+						"description": "Get paginated list of withdrawals. Supports filtering by status and date range."
+					}
+				},
+				{
+					"name": "Create Withdrawal",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    var json = pm.response.json();",
+									"    pm.collectionVariables.set('withdrawal_number', json.number);",
+									"    console.log('Saved withdrawal_number: ' + json.number);",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"bank_account_id\": \"{{bank_account_id}}\",\n    \"amount\": \"100.00\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/withdrawals/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "withdrawals", ""]
+						},
+						"description": "Create a withdrawal request. Amount in SAR (e.g. \"100.00\").\n\nRequires a linked bank account ID."
+					}
+				},
+				{
+					"name": "Get Withdrawal Details",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/withdrawals/{{withdrawal_number}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "withdrawals", "{{withdrawal_number}}"]
+						},
+						"description": "Get withdrawal details by number (e.g. WR-10001)"
+					}
+				}
+			]
+		},
+		{
+			"name": "Webhooks API",
+			"item": [
+				{
+					"name": "List Webhooks",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/web-hooks/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "web-hooks", ""]
+						},
+						"description": "Get list of registered webhooks"
+					}
+				},
+				{
+					"name": "Create Webhook",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    var json = pm.response.json();",
+									"    pm.collectionVariables.set('webhook_id', json.id);",
+									"    console.log('Saved webhook_id: ' + json.id);",
+									"    console.log('SECRET KEY (save it!): ' + json.secret_key);",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"url\": \"https://example.com/webhook\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/web-hooks/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "web-hooks", ""]
+						},
+						"description": "Create a new webhook. The secret_key is ONLY returned at creation time — save it immediately!"
+					}
+				},
+				{
+					"name": "Delete Webhook",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/web-hooks/{{webhook_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "web-hooks", "{{webhook_id}}"]
+						},
+						"description": "Delete a webhook by ID (UUID)"
+					}
+				}
+			]
+		}
+	]
+}

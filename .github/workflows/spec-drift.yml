@@ -1,0 +1,31 @@
+name: spec-drift
+on:
+  schedule: [{ cron: "0 6 * * 1" }]
+  workflow_dispatch:
+jobs:
+  compare:
+    runs-on: ubuntu-latest
+    permissions: { issues: write, contents: read }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11" }
+      - run: pip install pyyaml
+      - id: diff
+        run: |
+          curl -fsSL https://docs.amnn.sa/openapi.yml -o /tmp/live.yml
+          python - <<'PY'
+          import yaml, json, sys
+          a = yaml.safe_load(open('openapi/openapi.yml')); b = yaml.safe_load(open('/tmp/live.yml'))
+          changed = json.dumps(a, sort_keys=True) != json.dumps(b, sort_keys=True)
+          open('/tmp/changed', 'w').write('true' if changed else 'false')
+          PY
+          echo "changed=$(cat /tmp/changed)" >> "$GITHUB_OUTPUT"
+      - if: steps.diff.outputs.changed == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.create({ owner: context.repo.owner, repo: context.repo.repo,
+              title: `Spec drift detected (${new Date().toISOString().slice(0,10)})`,
+              labels: ['spec-drift'],
+              body: 'The live `https://docs.amnn.sa/openapi.yml` differs from `openapi/openapi.yml`. Re-vendor the spec, regenerate models, run the golden path, and update CHANGELOG.md.' });
