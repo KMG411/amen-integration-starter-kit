@@ -21,6 +21,10 @@ Docs: https://docs.amnn.sa · Sandbox: `https://sandbox-api.amnn.sa` · Live: `h
 
 > Every stack passes the same offline unit tests. Integration tests mirror `scenario/golden-path.yml` and run against the sandbox when `AMN_API_KEY` is set.
 
+## Partner Integration Guide
+
+New to the Amen API? Read the **[Partner Integration Guide (PDF)](docs/guide/Amen_API_Partner_Integration_Guide.pdf)** — a 15-minute handbook covering the escrow lifecycle, your first sandbox deal, how to copy the reference into your codebase, payments, webhooks, errors, mobile/dashboard patterns and a go-live checklist. Source: `docs/guide/partner-integration-guide.html`.
+
 ## 5-minute quick start
 
 ```sh

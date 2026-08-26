@@ -4,6 +4,7 @@ All notable changes to this kit. Format: [Keep a Changelog](https://keepachangel
 
 ## [Unreleased]
 ### Added
+- Partner Integration Guide (PDF + HTML source) under `docs/guide/`.
 - Repository skeleton: shared OpenAPI spec (v1.0), error catalogue (100 codes), golden-path scenario, docs 01–09, Postman collection + environments.
 - Python reference implementation (`python/`).
 - TypeScript reference implementation (`typescript/`).
