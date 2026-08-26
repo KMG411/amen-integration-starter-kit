@@ -1,5 +1,5 @@
 namespace Amen.Kit.Resources;
-public sealed class Webhooks(AmenClient c)
+public sealed class WebhooksResource(AmenClient c)
 {
     public async Task<List<Webhook>> ListAsync() => await c.GetAsync<List<Webhook>>("/web-hooks/") ?? [];
     /// <summary>SecretKey in the response is shown ONLY now — store it in a secret manager immediately.</summary>

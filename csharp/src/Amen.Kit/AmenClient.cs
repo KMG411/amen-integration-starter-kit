@@ -12,7 +12,7 @@ public sealed class AmenClient
     public Config Config { get; }
     readonly HttpClient _http;
     public Lookups Lookups { get; } public AccountResource Account { get; } public Customers Customers { get; }
-    public Deals Deals { get; } public Withdrawals Withdrawals { get; } public Webhooks Webhooks { get; }
+    public Deals Deals { get; } public Withdrawals Withdrawals { get; } public WebhooksResource Webhooks { get; }
 
     public AmenClient() : this(Config.FromEnvironment()) { }
     public AmenClient(Config config, HttpClient? httpClient = null)
