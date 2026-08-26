@@ -6,6 +6,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.*
 import okhttp3.*
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
 import sa.amnn.kit.resources.*
@@ -68,6 +69,6 @@ class AmenClient(val config: Config, httpClient: OkHttpClient? = null) {
         }
         internal fun backoff(attempt: Int, retryAfter: String? = null): Long =
             retryAfter?.toLongOrNull()?.times(1000) ?: (minOf(1L shl attempt, 20L) * 1000 + Random.nextLong(1000))
-        private fun String.toHttpUrlBuilder() = HttpUrl.get(this).newBuilder()
+        private fun String.toHttpUrlBuilder() = this.toHttpUrl().newBuilder()
     }
 }

@@ -16,9 +16,9 @@ public final class Customers {
     public Page<Customer> list(Map<String, String> params) { return c.page("/customers/", params, "customers", Customer.class); }
     /** Iterate every page — never process only the first page by accident. */
     public Iterable<Customer> all(Map<String, String> filters) {
-        return () -> new Iterator<>() {
+        return () -> new Iterator<Customer>() {
             int page = 0; Page<Customer> cur = fetch(); int i = 0;
-            Page<Customer> fetch() { Map<String, String> p = new HashMap<>(filters); p.put("page", String.valueOf(page)); return list(p); }
+            private Page<Customer> fetch() { Map<String, String> p = new HashMap<>(filters); p.put("page", String.valueOf(page)); return list(p); }
             public boolean hasNext() { if (i < cur.items().size()) return true; if (page + 1 >= cur.pages() || cur.items().isEmpty()) return false; page++; cur = fetch(); i = 0; return !cur.items().isEmpty(); }
             public Customer next() { return cur.items().get(i++); }
         };

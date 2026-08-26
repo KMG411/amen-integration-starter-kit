@@ -18,7 +18,7 @@ class Deals(private val c: AmenClient) {
         c.request("GET", "/deals/$n/allowed-payment-methods/", JsonElement.serializer())?.jsonObject?.get("payment_methods")?.jsonArray?.map { it.jsonPrimitive.content } ?: emptyList()
 }
 
-/** POST /deals/{n}/action/* — every method returns the updated Deal (or a Checkout for online payment). */
+/** POST /deals/{n}/action/{action} — every method returns the updated Deal (or a Checkout for online payment). */
 class DealActions(private val c: AmenClient, private val deals: Deals) {
     companion object {
         /** Which statuses each action may be called from (docs/02-deal-lifecycle.md). */
