@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 import sa.amnn.kit.resources.*;
@@ -26,6 +27,7 @@ public final class AmenClient {
 
     public final Config config;
     private final Transport transport;
+    private final String csrf = UUID.randomUUID().toString().replace("-", "");   // 32 hex chars — Django CSRF token format
     private final Lookups lookups; private final AccountResource account; private final Customers customers;
     private final Deals deals; private final Withdrawals withdrawals; private final Webhooks webhooks;
 
@@ -61,8 +63,11 @@ public final class AmenClient {
             .map(e -> URLEncoder.encode(e.getKey(), StandardCharsets.UTF_8) + "=" + URLEncoder.encode(e.getValue(), StandardCharsets.UTF_8)).collect(Collectors.joining("&"));
         String url = config.baseUrl() + Config.API_PREFIX + path + (query.isEmpty() ? "" : "?" + query);
         HttpRequest.Builder b = HttpRequest.newBuilder(URI.create(url)).timeout(Duration.ofMillis(config.timeoutMs()))
-            .header("X-API-Token", config.apiKey()).header("Accept", "application/json").header("User-Agent", "amen-starter-kit-java/0.1");
-        if (!method.equals("GET")) { b.header("Origin", config.baseUrl()).header("Referer", config.baseUrl()); }   // origin checks on mutating calls
+            .header("X-API-Token", config.apiKey()).header("Accept", "application/json").header("Accept-Language", "en")
+            .header("User-Agent", "amen-starter-kit-java/0.1").header("Cookie", "csrftoken=" + csrf);
+        if (!method.equals("GET")) {  // Django CSRF double-submit: token in both the X-CSRFToken header and the csrftoken cookie
+            b.header("X-CSRFToken", csrf).header("Origin", config.baseUrl()).header("Referer", config.baseUrl());
+        }
         try {
             if (parts != null) { String boundary = "----AmenKit" + UUID.randomUUID(); b.header("Content-Type", "multipart/form-data; boundary=" + boundary).method(method, HttpRequest.BodyPublishers.ofByteArray(multipart(parts, boundary))); }
             else if (json != null) { b.header("Content-Type", "application/json").method(method, HttpRequest.BodyPublishers.ofString(Models.JSON.writeValueAsString(json))); }

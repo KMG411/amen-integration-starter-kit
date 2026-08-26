@@ -7,10 +7,11 @@ import kotlinx.serialization.json.Json
 /** Models mirror openapi/openapi.yml. Money is a String ("100.00"); timestamps are epoch milliseconds. Unknown fields are ignored. */
 val json = Json { ignoreUnknownKeys = true; explicitNulls = false; encodeDefaults = false }
 
-fun Long?.toInstant() = this?.let { java.time.Instant.ofEpochMilli(it) }
+/** Parse an API timestamp: ISO-8601 string (e.g. "2026-08-26T18:04:42.825Z"). */
+fun String?.toInstant(): java.time.Instant? = this?.takeIf { it.isNotBlank() }?.let { runCatching { java.time.Instant.parse(it) }.getOrNull() }
 
-@Serializable data class Customer(val id: String? = null, val number: String, @SerialName("first_name") val firstName: String? = null, @SerialName("last_name") val lastName: String? = null, val status: String? = null, @SerialName("created_at") val createdAt: Long? = null)
-@Serializable data class Deal(val id: String? = null, val number: String, val status: String, val price: String? = null, @SerialName("created_at") val createdAt: Long? = null, @SerialName("updated_at") val updatedAt: Long? = null)
+@Serializable data class Customer(val id: String? = null, val number: String, @SerialName("first_name") val firstName: String? = null, @SerialName("last_name") val lastName: String? = null, val status: String? = null, @SerialName("created_at") val createdAt: String? = null)
+@Serializable data class Deal(val id: String? = null, val number: String, val status: String, val price: String? = null, @SerialName("created_at") val createdAt: String? = null, @SerialName("updated_at") val updatedAt: String? = null)
 @Serializable data class Checkout(val id: Int? = null, val provider: String? = null, val hyperpay: Map<String, String?>? = null, val amount: String? = null)
 @Serializable data class Withdrawal(val id: String? = null, val number: String, val status: String, val amount: String? = null)
 /** secretKey is returned ONLY at creation — store it in a secret manager immediately. */

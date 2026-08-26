@@ -2,9 +2,13 @@ import Foundation
 
 /// Models mirror openapi/openapi.yml. Money is a String ("100.00"); timestamps are epoch **milliseconds**.
 /// Unknown JSON fields are ignored by Codable, so additive API changes never break the client.
-public struct Customer: Codable, Sendable { public let id: String?; public let number: String; public let firstName: String?; public let lastName: String?; public let status: String?; public let createdAt: Int? }
-public struct Deal: Codable, Sendable { public let id: String?; public let number: String; public let status: String; public let price: String?; public let createdAt: Int?; public let updatedAt: Int?
-    public var created: Date? { createdAt.map { Date(timeIntervalSince1970: Double($0) / 1000) } } }
+public struct Customer: Codable, Sendable { public let id: String?; public let number: String; public let firstName: String?; public let lastName: String?; public let status: String?; public let createdAt: String? }
+public struct Deal: Codable, Sendable { public let id: String?; public let number: String; public let status: String; public let price: String?; public let createdAt: String?; public let updatedAt: String?
+    /// The API returns ISO-8601 strings (e.g. "2026-08-26T18:04:42.825Z").
+    public var created: Date? { createdAt.flatMap(parseAmenDate) } }
+
+let amenISOFormatter: ISO8601DateFormatter = { let f = ISO8601DateFormatter(); f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]; return f }()
+public func parseAmenDate(_ s: String) -> Date? { amenISOFormatter.date(from: s) ?? ISO8601DateFormatter().date(from: s) }
 public struct Checkout: Codable, Sendable { public struct HyperPay: Codable, Sendable { public let checkoutId: String? }; public let id: Int?; public let provider: String?; public let hyperpay: HyperPay?; public let amount: String? }
 public struct Withdrawal: Codable, Sendable { public let id: String?; public let number: String; public let status: String; public let amount: String? }
 public struct Webhook: Codable, Sendable { public let id: String; public let url: String; /// Returned ONLY at creation — store it in the Keychain / a secret manager immediately.

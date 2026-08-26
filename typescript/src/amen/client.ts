@@ -1,4 +1,5 @@
 /** AmenClient — the one place that knows about auth headers, base URL, timeouts and retries. */
+import { randomBytes } from "node:crypto";
 import { API_PREFIX, loadConfig, type Config } from "./config.js";
 import { AmenApiError } from "./errors.js";
 import { Lookups } from "./resources/lookups.js";
@@ -16,6 +17,7 @@ export class AmenClient {
   readonly lookups: Lookups; readonly account: AccountResource; readonly customers: Customers;
   readonly deals: Deals; readonly withdrawals: Withdrawals; readonly webhooks: Webhooks;
   private readonly fetchImpl: typeof fetch;
+  private readonly csrf = randomBytes(16).toString("hex");   // 32 hex chars — Django CSRF token format
 
   constructor(config?: Partial<Config>, fetchImpl: typeof fetch = fetch) {
     this.config = loadConfig(config);
@@ -28,8 +30,11 @@ export class AmenClient {
   async request<T = unknown>(method: Method, path: string, opts: RequestOptions = {}): Promise<T> {
     const url = new URL(API_PREFIX + path, this.config.baseUrl);
     for (const [k, v] of Object.entries(opts.params ?? {})) if (v !== undefined) url.searchParams.set(k, String(v));
-    const headers: Record<string, string> = { "X-API-Token": this.config.apiKey, Accept: "application/json", "User-Agent": "amen-starter-kit-ts/0.1" };
-    if (method !== "GET") { headers.Origin = headers.Referer = this.config.baseUrl; }  // origin checks on mutating calls
+    const headers: Record<string, string> = { "X-API-Token": this.config.apiKey, Accept: "application/json", "Accept-Language": "en", "User-Agent": "amen-starter-kit-ts/0.1", Cookie: `csrftoken=${this.csrf}` };
+    if (method !== "GET") {  // Django CSRF double-submit: token in both the header and the csrftoken cookie
+      headers["X-CSRFToken"] = this.csrf;
+      headers.Origin = headers.Referer = this.config.baseUrl;
+    }
     let body: BodyInit | undefined;
     if (opts.form) body = opts.form;
     else if (opts.json !== undefined) { body = JSON.stringify(opts.json); headers["Content-Type"] = "application/json"; }

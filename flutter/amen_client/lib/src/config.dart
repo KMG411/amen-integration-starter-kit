@@ -37,7 +37,7 @@ class Config {
           final idx = line.indexOf('=');
           out[line.substring(0, idx).trim()] = line.substring(idx + 1).replaceFirst(RegExp(r'\s+#.*$'), '').trim();
         }
-        return out;
+        return out;   // nearest .env only — do not leak a parent project's config
       }
       dir = dir.parent;
     }

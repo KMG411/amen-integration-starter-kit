@@ -35,11 +35,18 @@ def test_lifecycle_guard_blocks_invalid_action(offline_config):
 
 
 @respx.mock
-def test_mutating_requests_send_origin(offline_config):
+def test_mutating_requests_send_csrf_and_origin(offline_config):
+    import re
     route = respx.post("https://sandbox-api.amnn.sa/api/v1/web-hooks/").mock(return_value=httpx.Response(201, json={"id": "w", "url": "u", "secret_key": "s"}))
     wh = AmenClient(offline_config).webhooks.create("https://example.com/hook")
-    assert wh.secret_key == "s" and route.calls[0].request.headers["Origin"] == "https://sandbox-api.amnn.sa"
+    req = route.calls[0].request
+    csrf = req.headers["X-CSRFToken"]
+    assert wh.secret_key == "s"
+    assert req.headers["Origin"] == "https://sandbox-api.amnn.sa"
+    assert re.fullmatch(r"[0-9a-f]{32}", csrf)
+    assert f"csrftoken={csrf}" in req.headers.get("cookie", "")
 
 
-def test_timestamps_are_epoch_milliseconds():
+def test_timestamps_parse_iso_and_epoch():
+    assert ts("2026-08-26T18:04:42.825Z").year == 2026
     assert ts(1679568486000).year == 2023

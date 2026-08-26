@@ -1,6 +1,7 @@
 /// Thin typed views over API JSON. Unknown fields stay available in [raw].
 /// Money is a String ("100.00"); API timestamps are epoch **milliseconds**.
-DateTime? toDate(Object? ms) => ms is int ? DateTime.fromMillisecondsSinceEpoch(ms, isUtc: true) : null;
+/// Parse an API timestamp: ISO-8601 string (e.g. "2026-08-26T18:04:42.825Z") or epoch-ms int.
+DateTime? toDate(Object? v) => v is int ? DateTime.fromMillisecondsSinceEpoch(v, isUtc: true) : (v is String && v.isNotEmpty ? DateTime.tryParse(v) : null);
 
 class Customer {
   final Map<String, dynamic> raw;

@@ -5,9 +5,17 @@ from datetime import datetime, timezone
 from typing import Any
 
 
-def ts(ms: int | None) -> datetime | None:
-    """API timestamps are epoch **milliseconds**."""
-    return datetime.fromtimestamp(ms / 1000, tz=timezone.utc) if ms else None
+def ts(value) -> datetime | None:
+    """Parse an API timestamp. The Amen API returns ISO-8601 strings (e.g.
+    "2026-08-26T18:04:42.825Z"); epoch-millisecond integers are also accepted."""
+    if value in (None, ""):
+        return None
+    if isinstance(value, (int, float)):
+        return datetime.fromtimestamp(value / 1000, tz=timezone.utc)
+    try:
+        return datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+    except ValueError:
+        return None
 
 
 @dataclass

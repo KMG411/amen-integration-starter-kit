@@ -15,9 +15,10 @@ def _load_dotenv() -> None:
         return
     # Walk up from the current directory so examples/ and tests/ find the stack or kit-root .env
     here = Path.cwd().resolve()
-    for d in [here, *here.parents][:3]:   # cwd, stack, kit root
+    for d in [here, *here.parents][:4]:
         if (d / ".env").exists():
             load_dotenv(d / ".env", override=False)
+            break   # nearest .env only — do not leak a parent project's config
 
 
 @dataclass(frozen=True)

@@ -1,4 +1,5 @@
 /** AmenClient — the one place that knows about auth headers, base URL, timeouts and retries. */
+import { randomBytes } from "node:crypto";
 import { API_PREFIX, loadConfig } from "./config.js";
 import { AmenApiError } from "./errors.js";
 import { Lookups } from "./resources/lookups.js";
@@ -12,6 +13,7 @@ export class AmenClient {
   constructor(config, fetchImpl = fetch) {
     this.config = loadConfig(config);
     this.fetchImpl = fetchImpl;
+    this.csrf = randomBytes(16).toString("hex");   // 32 hex chars — Django CSRF token format
     this.lookups = new Lookups(this); this.account = new AccountResource(this); this.customers = new Customers(this);
     this.deals = new Deals(this); this.withdrawals = new Withdrawals(this); this.webhooks = new Webhooks(this);
   }
@@ -20,8 +22,11 @@ export class AmenClient {
   async request(method, path, opts = {}) {
     const url = new URL(API_PREFIX + path, this.config.baseUrl);
     for (const [k, v] of Object.entries(opts.params ?? {})) if (v !== undefined) url.searchParams.set(k, String(v));
-    const headers = { "X-API-Token": this.config.apiKey, Accept: "application/json", "User-Agent": "amen-starter-kit-js/0.1" };
-    if (method !== "GET") headers.Origin = headers.Referer = this.config.baseUrl;   // origin checks on mutating calls
+    const headers = { "X-API-Token": this.config.apiKey, Accept: "application/json", "Accept-Language": "en", "User-Agent": "amen-starter-kit-js/0.1", Cookie: `csrftoken=${this.csrf}` };
+    if (method !== "GET") {  // Django CSRF double-submit: token in both the X-CSRFToken header and the csrftoken cookie
+      headers["X-CSRFToken"] = this.csrf;
+      headers.Origin = headers.Referer = this.config.baseUrl;
+    }
     let body;
     if (opts.form) body = opts.form;
     else if (opts.json !== undefined) { body = JSON.stringify(opts.json); headers["Content-Type"] = "application/json"; }

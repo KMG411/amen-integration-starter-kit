@@ -11,6 +11,7 @@ public sealed class AmenClient
 {
     public Config Config { get; }
     readonly HttpClient _http;
+    readonly string _csrf = Guid.NewGuid().ToString("N");   // 32 hex chars — Django CSRF token format
     public Lookups Lookups { get; } public AccountResource Account { get; } public Customers Customers { get; }
     public Deals Deals { get; } public Withdrawals Withdrawals { get; } public WebhooksResource Webhooks { get; }
 
@@ -18,7 +19,8 @@ public sealed class AmenClient
     public AmenClient(Config config, HttpClient? httpClient = null)
     {
         Config = config;
-        _http = httpClient ?? new HttpClient { Timeout = TimeSpan.FromMilliseconds(config.TimeoutMs) };
+        // UseCookies=false so our manual csrftoken Cookie header is not stripped by the handler
+        _http = httpClient ?? new HttpClient(new HttpClientHandler { UseCookies = false }) { Timeout = TimeSpan.FromMilliseconds(config.TimeoutMs) };
         Lookups = new(this); Account = new(this); Customers = new(this); Deals = new(this); Withdrawals = new(this); Webhooks = new(this);
     }
 
@@ -39,7 +41,13 @@ public sealed class AmenClient
             req.Headers.TryAddWithoutValidation("X-API-Token", Config.ApiKey);
             req.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             req.Headers.UserAgent.ParseAdd("amen-starter-kit-dotnet/0.1");
-            if (method != HttpMethod.Get) { req.Headers.TryAddWithoutValidation("Origin", Config.BaseUrl); req.Headers.Referrer = new Uri(Config.BaseUrl); }  // origin checks on mutating calls
+            req.Headers.TryAddWithoutValidation("Accept-Language", "en");
+            req.Headers.TryAddWithoutValidation("Cookie", $"csrftoken={_csrf}");
+            if (method != HttpMethod.Get) {  // Django CSRF double-submit: token in both the X-CSRFToken header and the csrftoken cookie
+                req.Headers.TryAddWithoutValidation("X-CSRFToken", _csrf);
+                req.Headers.TryAddWithoutValidation("Origin", Config.BaseUrl);
+                req.Headers.Referrer = new Uri(Config.BaseUrl);
+            }
             if (form is not null) req.Content = form;
             else if (json is not null) req.Content = new StringContent(JsonSerializer.Serialize(json, Json.Options), Encoding.UTF8, "application/json");
 

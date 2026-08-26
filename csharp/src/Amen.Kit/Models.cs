@@ -11,11 +11,12 @@ public static class Json
         PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower, DictionaryKeyPolicy = JsonNamingPolicy.SnakeCaseLower,
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull, PropertyNameCaseInsensitive = true,
     };
-    public static DateTimeOffset? ToDate(long? ms) => ms is null ? null : DateTimeOffset.FromUnixTimeMilliseconds(ms.Value);
+    /// <summary>Parse an API timestamp: ISO-8601 string (e.g. "2026-08-26T18:04:42.825Z").</summary>
+    public static DateTimeOffset? ToDate(string? iso) => string.IsNullOrEmpty(iso) ? null : (DateTimeOffset.TryParse(iso, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.RoundtripKind, out var d) ? d : null);
 }
 
-public sealed record Customer(string? Id, string Number, string? FirstName, string? LastName, string? Status, long? CreatedAt);
-public sealed record Deal(string? Id, string Number, string Status, string? Price, long? CreatedAt, long? UpdatedAt);
+public sealed record Customer(string? Id, string Number, string? FirstName, string? LastName, string? Status, string? CreatedAt);
+public sealed record Deal(string? Id, string Number, string Status, string? Price, string? CreatedAt, string? UpdatedAt);
 public sealed record Checkout(int? Id, string? Provider, Dictionary<string, object?>? Hyperpay, string? Amount);
 public sealed record Withdrawal(string? Id, string Number, string Status, string? Amount);
 /// <summary>SecretKey is returned ONLY at creation — store it in a secret manager immediately.</summary>

@@ -18,10 +18,11 @@ public final class Models {
         .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
         .setSerializationInclusion(JsonInclude.Include.NON_NULL);
 
-    public static Instant toInstant(Long ms) { return ms == null ? null : Instant.ofEpochMilli(ms); }
+    /** Parse an API timestamp: ISO-8601 string (e.g. "2026-08-26T18:04:42.825Z"). */
+    public static Instant toInstant(String iso) { try { return iso == null || iso.isBlank() ? null : Instant.parse(iso); } catch (Exception e) { return null; } }
 
-    @JsonIgnoreProperties(ignoreUnknown = true) public record Customer(String id, String number, String firstName, String lastName, String status, Long createdAt) {}
-    @JsonIgnoreProperties(ignoreUnknown = true) public record Deal(String id, String number, String status, String price, Long createdAt, Long updatedAt) {}
+    @JsonIgnoreProperties(ignoreUnknown = true) public record Customer(String id, String number, String firstName, String lastName, String status, String createdAt) {}
+    @JsonIgnoreProperties(ignoreUnknown = true) public record Deal(String id, String number, String status, String price, String createdAt, String updatedAt) {}
     @JsonIgnoreProperties(ignoreUnknown = true) public record Checkout(Integer id, String provider, Map<String, Object> hyperpay, String amount) {}
     @JsonIgnoreProperties(ignoreUnknown = true) public record Withdrawal(String id, String number, String status, String amount) {}
     /** secretKey is returned ONLY at creation — store it in a secret manager immediately. */

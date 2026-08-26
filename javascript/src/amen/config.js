@@ -8,7 +8,7 @@ export const API_PREFIX = "/api/v1";
 
 export function loadConfig(overrides = {}) {
   let dir = resolve(".");
-  for (let i = 0; i < 3; i++) { const p = resolve(dir, ".env"); if (existsSync(p)) dotenv({ path: p, override: false }); dir = resolve(dir, ".."); }
+  for (let i = 0; i < 4; i++) { const p = resolve(dir, ".env"); if (existsSync(p)) { dotenv({ path: p, override: false }); break; } dir = resolve(dir, ".."); }
   const env = (process.env.AMN_ENV ?? "sandbox").toLowerCase();
   if (!BASE_URLS[env]) throw new Error(`AMN_ENV must be 'sandbox' or 'live', got '${env}'`);
   const apiKey = overrides.apiKey ?? process.env.AMN_API_KEY;

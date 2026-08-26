@@ -11,12 +11,14 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
 import sa.amnn.kit.resources.*
 import java.io.IOException
+import java.util.UUID
 import java.util.concurrent.TimeUnit
 import kotlin.random.Random
 
 /** AmenClient — the one place that knows about auth headers, base URL, timeouts and retries. Suspend API; call from coroutines. */
 class AmenClient(val config: Config, httpClient: OkHttpClient? = null) {
     private val http = httpClient ?: OkHttpClient.Builder().callTimeout(config.timeoutMs, TimeUnit.MILLISECONDS).build()
+    private val csrf = UUID.randomUUID().toString().replace("-", "")   // 32 hex chars — Django CSRF token format
     val lookups = Lookups(this); val account = AccountResource(this); val customers = Customers(this)
     val deals = Deals(this); val withdrawals = Withdrawals(this); val webhooks = Webhooks(this)
 
@@ -25,8 +27,11 @@ class AmenClient(val config: Config, httpClient: OkHttpClient? = null) {
 
     suspend fun <T> request(method: String, path: String, serializer: KSerializer<T>, params: Map<String, String?> = emptyMap(), body: JsonElement? = null, form: List<Part>? = null): T? {
         val url = (config.baseUrl + Config.API_PREFIX + path).toHttpUrlBuilder().apply { params.forEach { (k, v) -> v?.let { addQueryParameter(k, it) } } }.build()
-        val b = Request.Builder().url(url).header("X-API-Token", config.apiKey).header("Accept", "application/json").header("User-Agent", "amen-starter-kit-kotlin/0.1")
-        if (method != "GET") b.header("Origin", config.baseUrl).header("Referer", config.baseUrl)   // origin checks on mutating calls
+        val b = Request.Builder().url(url).header("X-API-Token", config.apiKey).header("Accept", "application/json")
+            .header("Accept-Language", "en").header("User-Agent", "amen-starter-kit-kotlin/0.1").header("Cookie", "csrftoken=$csrf")
+        if (method != "GET") {  // Django CSRF double-submit: token in both the X-CSRFToken header and the csrftoken cookie
+            b.header("X-CSRFToken", csrf).header("Origin", config.baseUrl).header("Referer", config.baseUrl)
+        }
         val reqBody: RequestBody? = when {
             form != null -> MultipartBody.Builder().setType(MultipartBody.FORM).apply {
                 form.forEach { p -> if (p.file != null) addFormDataPart(p.name, p.filename, p.file.toRequestBody(p.mimeType.toMediaType())) else addFormDataPart(p.name, p.value ?: "") }

@@ -24,9 +24,14 @@ void main() {
     await expectLater(c.deals.actions.approve('DL-1'), throwsA(isA<AmenLifecycleError>()));
     expect(calls, 1);
   });
-  test('Origin sent on mutating requests', () async {
-    final c = client((req) async { expect(req.headers['Origin'], 'https://sandbox-api.amnn.sa'); return json(201, {'id': 'w', 'url': 'u', 'secret_key': 's'}); });
+  test('CSRF token (header + cookie) and Origin sent on mutating requests', () async {
+    final c = client((req) async {
+      expect(req.headers['Origin'], 'https://sandbox-api.amnn.sa');
+      expect(req.headers['X-CSRFToken'], matches(r'^[0-9a-f]{32}$'));
+      expect(req.headers['Cookie'], 'csrftoken=${req.headers['X-CSRFToken']}');
+      return json(201, {'id': 'w', 'url': 'u', 'secret_key': 's'});
+    });
     expect((await c.webhooks.create('https://example.com/hook')).secretKey, 's');
   });
-  test('timestamps are epoch milliseconds', () => expect(toDate(1679568486000)!.year, 2023));
+  test('timestamps: epoch-ms and ISO string', () { expect(toDate(1679568486000)!.year, 2023); expect(toDate('2026-08-26T18:04:42.825Z')!.year, 2026); });
 }

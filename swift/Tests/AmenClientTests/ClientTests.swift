@@ -27,15 +27,21 @@ final class ClientTests: XCTestCase {
         do { _ = try await client { _ in counter.inc(); return (200, #"{"number":"DL-1","status":"draft"}"#) }.deals.actions.approve("DL-1"); XCTFail() }
         catch is AmenLifecycleError { XCTAssertEqual(counter.n, 1) } catch { XCTFail("\(error)") }
     }
-    func testOriginOnMutatingRequests() async throws {
-        let wh = try await client { r in XCTAssertEqual(r.value(forHTTPHeaderField: "Origin"), "https://sandbox-api.amnn.sa"); return (201, #"{"id":"w","url":"u","secret_key":"s"}"#) }.webhooks.create(url: "https://example.com/hook")
+    func testCsrfAndOriginOnMutatingRequests() async throws {
+        let wh = try await client { r in
+            XCTAssertEqual(r.value(forHTTPHeaderField: "Origin"), "https://sandbox-api.amnn.sa")
+            let csrf = r.value(forHTTPHeaderField: "X-CSRFToken") ?? ""
+            XCTAssertEqual(csrf.count, 32)
+            XCTAssertEqual(r.value(forHTTPHeaderField: "Cookie"), "csrftoken=\(csrf)")
+            return (201, #"{"id":"w","url":"u","secret_key":"s"}"#)
+        }.webhooks.create(url: "https://example.com/hook")
         XCTAssertEqual(wh.secretKey, "s")
     }
-    func testSnakeCaseEncodingAndEpochMillis() throws {
+    func testSnakeCaseEncodingAndIsoTimestamp() throws {
         let data = try snakeEncoder.encode(CreateDeal(offerType: .product, offerTitle: "t", offerPrice: "1.00"))
         XCTAssertTrue(String(decoding: data, as: UTF8.self).contains("\"offer_type\""))
-        let deal = try snakeDecoder.decode(Deal.self, from: Data(#"{"number":"DL-1","status":"draft","created_at":1679568486000}"#.utf8))
-        XCTAssertEqual(Calendar(identifier: .gregorian).component(.year, from: deal.created!), 2023)
+        let deal = try snakeDecoder.decode(Deal.self, from: Data(#"{"number":"DL-1","status":"draft","created_at":"2026-08-26T18:04:42.825Z"}"#.utf8))
+        XCTAssertEqual(Calendar(identifier: .gregorian).component(.year, from: deal.created!), 2026)
     }
 }
 final class Counter: @unchecked Sendable { var n = 0; func inc() { n += 1 } }

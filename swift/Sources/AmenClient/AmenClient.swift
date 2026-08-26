@@ -6,9 +6,15 @@ import FoundationNetworking
 /// Transport abstraction so tests can inject responses. Default is URLSession.
 public protocol HTTPTransport: Sendable { func send(_ request: URLRequest) async throws -> (Data, HTTPURLResponse) }
 public struct URLSessionTransport: HTTPTransport {
-    public init() {}
+    private let session: URLSession
+    public init() {
+        let cfg = URLSessionConfiguration.ephemeral   // do not let URLSession manage cookies; we set csrftoken ourselves
+        cfg.httpShouldSetCookies = false
+        cfg.httpCookieStorage = nil
+        session = URLSession(configuration: cfg)
+    }
     public func send(_ request: URLRequest) async throws -> (Data, HTTPURLResponse) {
-        let (data, resp) = try await URLSession.shared.data(for: request)
+        let (data, resp) = try await session.data(for: request)
         return (data, resp as! HTTPURLResponse)
     }
 }
@@ -21,6 +27,7 @@ public struct MultipartFile { public let field: String; public let filename: Str
 public final class AmenClient: @unchecked Sendable {
     public let config: Config
     let transport: HTTPTransport
+    private let csrf = UUID().uuidString.replacingOccurrences(of: "-", with: "").lowercased()   // 32 hex chars — Django CSRF token format
     public private(set) lazy var lookups = Lookups(self)
     public private(set) lazy var account = AccountResource(self)
     public private(set) lazy var customers = Customers(self)
@@ -42,7 +49,13 @@ public final class AmenClient: @unchecked Sendable {
         req.setValue(config.apiKey, forHTTPHeaderField: "X-API-Token")
         req.setValue("application/json", forHTTPHeaderField: "Accept")
         req.setValue("amen-starter-kit-swift/0.1", forHTTPHeaderField: "User-Agent")
-        if method != .GET { req.setValue(config.baseURL.absoluteString, forHTTPHeaderField: "Origin"); req.setValue(config.baseURL.absoluteString, forHTTPHeaderField: "Referer") }
+        req.setValue("en", forHTTPHeaderField: "Accept-Language")
+        req.setValue("csrftoken=\(csrf)", forHTTPHeaderField: "Cookie")
+        if method != .GET {  // Django CSRF double-submit: token in both the X-CSRFToken header and the csrftoken cookie
+            req.setValue(csrf, forHTTPHeaderField: "X-CSRFToken")
+            req.setValue(config.baseURL.absoluteString, forHTTPHeaderField: "Origin")
+            req.setValue(config.baseURL.absoluteString, forHTTPHeaderField: "Referer")
+        }
         if let form { let b = "----AmenKit\(UUID().uuidString)"; req.setValue("multipart/form-data; boundary=\(b)", forHTTPHeaderField: "Content-Type"); req.httpBody = Self.multipart(form, files, boundary: b) }
         else if let json { req.setValue("application/json", forHTTPHeaderField: "Content-Type"); req.httpBody = try snakeEncoder.encode(json) }
 

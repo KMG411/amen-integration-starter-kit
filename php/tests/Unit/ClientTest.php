@@ -26,9 +26,15 @@ final class ClientTest extends TestCase
         $this->expectException(AmenLifecycleError::class);
         try { $c->deals->actions->approve('DL-1'); } finally { $this->assertSame(1, $calls); }
     }
-    public function testOriginOnMutatingRequests(): void
+    public function testCsrfAndOriginOnMutatingRequests(): void
     {
-        $c = self::client(function ($m, $u, $headers) { $this->assertContains('Origin: https://sandbox-api.amnn.sa', $headers); return [201, '{"id":"w","secret_key":"s"}']; });
+        $c = self::client(function ($m, $u, $headers) {
+            $this->assertContains('Origin: https://sandbox-api.amnn.sa', $headers);
+            $csrf = null; foreach ($headers as $h) { if (str_starts_with($h, 'X-CSRFToken: ')) $csrf = substr($h, 13); }
+            $this->assertMatchesRegularExpression('/^[0-9a-f]{32}$/', (string)$csrf);
+            $this->assertContains('Cookie: csrftoken=' . $csrf, $headers);
+            return [201, '{"id":"w","secret_key":"s"}'];
+        });
         $this->assertSame('s', $c->webhooks->create('https://example.com/hook')['secret_key']);
     }
 }

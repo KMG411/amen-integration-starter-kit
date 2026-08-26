@@ -31,9 +31,9 @@ public struct Config: Sendable {
 
     static func loadDotenv() -> [String: String] {
         var dir = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
-        for _ in 0..<3 {
+        for _ in 0..<4 {
             let f = dir.appendingPathComponent(".env")
-            if let text = try? String(contentsOf: f, encoding: .utf8) {
+            if let text = try? String(contentsOf: f, encoding: .utf8) {  // nearest .env only
                 var out: [String: String] = [:]
                 for line in text.split(separator: "\n") {
                     let l = line.trimmingCharacters(in: .whitespaces)
@@ -41,7 +41,7 @@ public struct Config: Sendable {
                     let v = l[l.index(after: eq)...].replacingOccurrences(of: #"\s+#.*$"#, with: "", options: .regularExpression).trimmingCharacters(in: .whitespaces)
                     if !v.isEmpty { out[String(l[..<eq]).trimmingCharacters(in: .whitespaces)] = v }
                 }
-                return out
+                return out   // do not leak a parent project's config
             }
             dir = dir.deletingLastPathComponent()
         }

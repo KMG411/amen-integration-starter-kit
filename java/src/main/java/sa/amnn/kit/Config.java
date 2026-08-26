@@ -41,7 +41,7 @@ public record Config(String env, String apiKey, String baseUrl, int timeoutMs, S
                     if (!v.isEmpty()) out.put(l.substring(0, eq).trim(), v);
                 }
             } catch (IOException ignored) {}
-            return out;
+            return out;   // nearest .env only — do not leak a parent project's config
         }
         return Map.of();
     }

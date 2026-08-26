@@ -24,8 +24,13 @@ describe("AmenClient", () => {
     await expect(client(f as any).deals.actions.approve("DL-1")).rejects.toBeInstanceOf(AmenLifecycleError);
     expect(f).toHaveBeenCalledTimes(1);   // only the GET, no POST
   });
-  it("sends Origin on mutating requests", async () => {
-    const f = vi.fn(async (_u: any, init: any) => { expect(init.headers.Origin).toBe("https://sandbox-api.amnn.sa"); return json(201, { id: "w", url: "u", secret_key: "s" }); });
+  it("sends CSRF token (header + cookie) and Origin on mutating requests", async () => {
+    const f = vi.fn(async (_u: any, init: any) => {
+      expect(init.headers.Origin).toBe("https://sandbox-api.amnn.sa");
+      expect(init.headers["X-CSRFToken"]).toBeTruthy();
+      expect(init.headers.Cookie).toBe(`csrftoken=${init.headers["X-CSRFToken"]}`);
+      return json(201, { id: "w", url: "u", secret_key: "s" });
+    });
     expect((await client(f as any).webhooks.create("https://example.com/hook")).secret_key).toBe("s");
   });
 });

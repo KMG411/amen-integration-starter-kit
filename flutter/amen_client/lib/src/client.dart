@@ -10,6 +10,8 @@ import 'resources/lookups.dart';
 import 'resources/webhooks.dart';
 import 'resources/withdrawals.dart';
 
+String _csrfToken() { final r = Random.secure(); return List.generate(16, (_) => r.nextInt(256).toRadixString(16).padLeft(2, '0')).join(); }
+
 /// AmenClient — the one place that knows about auth headers, base URL, timeouts and retries.
 class AmenClient {
   final Config config;
@@ -21,13 +23,18 @@ class AmenClient {
   late final Withdrawals withdrawals = Withdrawals(this);
   late final Webhooks webhooks = Webhooks(this);
 
+  final String _csrf = _csrfToken();   // 32 hex chars — Django CSRF token format
   AmenClient(this.config, {http.Client? httpClient}) : _http = httpClient ?? http.Client();
 
   Future<dynamic> request(String method, String path, {Object? json, Map<String, String?>? params, Map<String, String>? form, List<http.MultipartFile>? files}) async {
     var uri = Uri.parse('${config.baseUrl}${Config.apiPrefix}$path');
     if (params != null) uri = uri.replace(queryParameters: {for (final e in params.entries) if (e.value != null) e.key: e.value!});
-    final headers = {'X-API-Token': config.apiKey, 'Accept': 'application/json', 'User-Agent': 'amen-starter-kit-dart/0.1'};
-    if (method != 'GET') { headers['Origin'] = config.baseUrl; headers['Referer'] = config.baseUrl; } // origin checks on mutating calls
+    final headers = {'X-API-Token': config.apiKey, 'Accept': 'application/json', 'Accept-Language': 'en', 'User-Agent': 'amen-starter-kit-dart/0.1', 'Cookie': 'csrftoken=$_csrf'};
+    if (method != 'GET') {  // Django CSRF double-submit: token in both the X-CSRFToken header and the csrftoken cookie
+      headers['X-CSRFToken'] = _csrf;
+      headers['Origin'] = config.baseUrl;
+      headers['Referer'] = config.baseUrl;
+    }
 
     for (var attempt = 1;; attempt++) {
       http.Response res;

@@ -33,13 +33,19 @@ class ClientTest {
         assertThrows(AmenLifecycleError.class, () -> client(r -> { calls.incrementAndGet(); return json(200, "{\"number\":\"DL-1\",\"status\":\"draft\"}"); }).deals().actions().approve("DL-1", null));
         assertEquals(1, calls.get());
     }
-    @Test void originOnMutatingRequests() {
-        var wh = client(r -> { assertEquals("https://sandbox-api.amnn.sa", r.headers().firstValue("Origin").orElseThrow()); return json(201, "{\"id\":\"w\",\"url\":\"u\",\"secret_key\":\"s\"}"); }).webhooks().create("https://example.com/hook");
+    @Test void csrfAndOriginOnMutatingRequests() {
+        var wh = client(r -> {
+            assertEquals("https://sandbox-api.amnn.sa", r.headers().firstValue("Origin").orElseThrow());
+            String csrf = r.headers().firstValue("X-CSRFToken").orElseThrow();
+            assertTrue(csrf.matches("[0-9a-f]{32}"));
+            assertEquals("csrftoken=" + csrf, r.headers().firstValue("Cookie").orElseThrow());
+            return json(201, "{\"id\":\"w\",\"url\":\"u\",\"secret_key\":\"s\"}");
+        }).webhooks().create("https://example.com/hook");
         assertEquals("s", wh.secretKey());
     }
-    @Test void snakeCaseAndEpochMillis() throws Exception {
+    @Test void snakeCaseAndIsoTimestamp() throws Exception {
         assertTrue(Models.JSON.writeValueAsString(new Models.CreateDeal("product", "t").price("1.00")).contains("\"offer_type\""));
-        var deal = Models.JSON.readValue("{\"number\":\"DL-1\",\"status\":\"draft\",\"created_at\":1679568486000,\"unknown\":1}", Models.Deal.class);
-        assertEquals(2023, Models.toInstant(deal.createdAt()).atZone(java.time.ZoneOffset.UTC).getYear());
+        var deal = Models.JSON.readValue("{\"number\":\"DL-1\",\"status\":\"draft\",\"created_at\":\"2026-08-26T18:04:42.825Z\",\"unknown\":1}", Models.Deal.class);
+        assertEquals(2026, Models.toInstant(deal.createdAt()).atZone(java.time.ZoneOffset.UTC).getYear());
     }
 }

@@ -32,15 +32,21 @@ public class ClientTests
         await Assert.ThrowsAsync<AmenLifecycleError>(() => Client(_ => { calls++; return Json(200, "{\"number\":\"DL-1\",\"status\":\"draft\"}"); }).Deals.Actions.ApproveAsync("DL-1"));
         Assert.Equal(1, calls);
     }
-    [Fact] public async Task OriginOnMutatingRequests()
+    [Fact] public async Task CsrfAndOriginOnMutatingRequests()
     {
-        var wh = await Client(r => { Assert.Equal("https://sandbox-api.amnn.sa", r.Headers.GetValues("Origin").Single()); return Json(201, "{\"id\":\"w\",\"url\":\"u\",\"secret_key\":\"s\"}"); }).Webhooks.CreateAsync("https://example.com/hook");
+        var wh = await Client(r => {
+            Assert.Equal("https://sandbox-api.amnn.sa", r.Headers.GetValues("Origin").Single());
+            var csrf = r.Headers.GetValues("X-CSRFToken").Single();
+            Assert.Matches("^[0-9a-f]{32}$", csrf);
+            Assert.Equal($"csrftoken={csrf}", r.Headers.GetValues("Cookie").Single());
+            return Json(201, "{\"id\":\"w\",\"url\":\"u\",\"secret_key\":\"s\"}");
+        }).Webhooks.CreateAsync("https://example.com/hook");
         Assert.Equal("s", wh.SecretKey);
     }
-    [Fact] public void SnakeCaseAndEpochMillis()
+    [Fact] public void SnakeCaseAndIsoTimestamp()
     {
         Assert.Contains("\"offer_type\"", System.Text.Json.JsonSerializer.Serialize(new CreateDeal("product", "t") { OfferPrice = "1.00" }, Amen.Kit.Json.Options));
-        var deal = System.Text.Json.JsonSerializer.Deserialize<Deal>("{\"number\":\"DL-1\",\"status\":\"draft\",\"created_at\":1679568486000,\"unknown\":1}", Amen.Kit.Json.Options)!;
-        Assert.Equal(2023, Amen.Kit.Json.ToDate(deal.CreatedAt)!.Value.Year);
+        var deal = System.Text.Json.JsonSerializer.Deserialize<Deal>("{\"number\":\"DL-1\",\"status\":\"draft\",\"created_at\":\"2026-08-26T18:04:42.825Z\",\"unknown\":1}", Amen.Kit.Json.Options)!;
+        Assert.Equal(2026, Amen.Kit.Json.ToDate(deal.CreatedAt)!.Value.Year);
     }
 }

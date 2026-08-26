@@ -29,7 +29,7 @@ data class Config(
                     val l = line.trim(); val eq = l.indexOf('=')
                     if (l.isEmpty() || l.startsWith("#") || eq < 0) null
                     else l.substring(0, eq).trim() to l.substring(eq + 1).replace(Regex("\\s+#.*$"), "").trim()
-                }.filter { it.second.isNotEmpty() }.toMap()
+                }.filter { it.second.isNotEmpty() }.toMap()   // nearest .env only — do not leak a parent project's config
                 dir = dir?.parentFile ?: return emptyMap()
             }
             return emptyMap()

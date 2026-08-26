@@ -29,7 +29,7 @@ final class Config
     private static function loadDotenv(): void
     {
         $dir = getcwd();
-        for ($i = 0; $i < 3 && $dir; $i++, $dir = dirname($dir)) {
+        for ($i = 0; $i < 4 && $dir; $i++, $dir = dirname($dir)) {
             $file = $dir . DIRECTORY_SEPARATOR . '.env';
             if (!is_file($file)) continue;
             foreach (file($file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $line) {
@@ -38,6 +38,7 @@ final class Config
                 $k = trim($k); $v = trim(preg_replace('/\s+#.*$/', '', $v), " \t\"'");
                 if ($v !== '' && getenv($k) === false) putenv("$k=$v");
             }
+            return;   // nearest .env only — do not leak a parent project's config
         }
     }
 }

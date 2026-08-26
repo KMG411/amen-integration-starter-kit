@@ -12,11 +12,13 @@ final class AmenClient
     public readonly Deals $deals; public readonly Withdrawals $withdrawals; public readonly Webhooks $webhooks;
     /** @var callable(string $method, string $url, array $headers, ?string $body): array{0:int,1:string} */
     private $transport;
+    private readonly string $csrf;
 
     public function __construct(?Config $config = null, ?callable $transport = null)
     {
         $this->config = $config ?? Config::fromEnv();
         $this->transport = $transport ?? [$this, 'curl'];
+        $this->csrf = bin2hex(random_bytes(16));   // 32 hex chars — Django CSRF token format
         $this->lookups = new Lookups($this); $this->account = new Account($this); $this->customers = new Customers($this);
         $this->deals = new Deals($this); $this->withdrawals = new Withdrawals($this); $this->webhooks = new Webhooks($this);
     }
@@ -26,8 +28,12 @@ final class AmenClient
     {
         $url = $this->config->baseUrl . Config::API_PREFIX . $path;
         if (!empty($opts['params'])) $url .= '?' . http_build_query(array_filter($opts['params'], fn($v) => $v !== null));
-        $headers = ['X-API-Token: ' . $this->config->apiKey, 'Accept: application/json', 'User-Agent: amen-starter-kit-php/0.1'];
-        if ($method !== 'GET') { $headers[] = 'Origin: ' . $this->config->baseUrl; $headers[] = 'Referer: ' . $this->config->baseUrl; }
+        $headers = ['X-API-Token: ' . $this->config->apiKey, 'Accept: application/json', 'Accept-Language: en', 'User-Agent: amen-starter-kit-php/0.1', 'Cookie: csrftoken=' . $this->csrf];
+        if ($method !== 'GET') {  // Django CSRF double-submit: token in both the X-CSRFToken header and the csrftoken cookie
+            $headers[] = 'X-CSRFToken: ' . $this->csrf;
+            $headers[] = 'Origin: ' . $this->config->baseUrl;
+            $headers[] = 'Referer: ' . $this->config->baseUrl;
+        }
         $body = null;
         if (isset($opts['form'])) { $body = $opts['form']; }                       // curl builds multipart from an array
         elseif (array_key_exists('json', $opts)) { $body = json_encode($opts['json']); $headers[] = 'Content-Type: application/json'; }

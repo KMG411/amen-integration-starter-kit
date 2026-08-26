@@ -31,14 +31,18 @@ class ClientTest {
         assertFailsWith<AmenLifecycleError> { c.deals.actions.approve("DL-1") }
         assertEquals(1, s.requestCount); s.shutdown()
     }
-    @Test fun originOnMutatingRequests() = runTest {
+    @Test fun csrfAndOriginOnMutatingRequests() = runTest {
         val (s, c) = server(json(201, """{"id":"w","url":"u","secret_key":"s"}"""))
         assertEquals("s", c.webhooks.create("https://example.com/hook").secretKey)
-        assertEquals(c.config.baseUrl, s.takeRequest().getHeader("Origin")); s.shutdown()
+        val req = s.takeRequest()
+        assertEquals(c.config.baseUrl, req.getHeader("Origin"))
+        val csrf = req.getHeader("X-CSRFToken")!!
+        assertTrue(csrf.matches(Regex("[0-9a-f]{32}")))
+        assertEquals("csrftoken=$csrf", req.getHeader("Cookie")); s.shutdown()
     }
-    @Test fun snakeCaseAndEpochMillis() {
+    @Test fun snakeCaseAndIsoTimestamp() {
         assertTrue(json.encodeToString(CreateDeal.serializer(), CreateDeal("product", "t", offerPrice = "1.00")).contains("\"offer_type\""))
-        val deal = json.decodeFromString(Deal.serializer(), """{"number":"DL-1","status":"draft","created_at":1679568486000,"unknown":1}""")
-        assertEquals(2023, deal.createdAt.toInstant()!!.atZone(java.time.ZoneOffset.UTC).year)
+        val deal = json.decodeFromString(Deal.serializer(), """{"number":"DL-1","status":"draft","created_at":"2026-08-26T18:04:42.825Z","unknown":1}""")
+        assertEquals(2026, deal.createdAt.toInstant()!!.atZone(java.time.ZoneOffset.UTC).year)
     }
 }

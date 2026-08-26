@@ -33,7 +33,7 @@ public sealed record Config(string Env, string ApiKey, string BaseUrl, int Timeo
                 var v = System.Text.RegularExpressions.Regex.Replace(l[(eq + 1)..], @"\s+#.*$", "").Trim();
                 if (v.Length > 0) outp[l[..eq].Trim()] = v;
             }
-            return outp;
+            return outp;   // nearest .env only — do not leak a parent project's config
         }
         return new();
     }

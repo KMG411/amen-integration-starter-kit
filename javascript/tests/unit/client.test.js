@@ -20,7 +20,7 @@ test("lifecycle guard blocks invalid action locally", async () => {
   let calls = 0; const f = async () => { calls++; return json(200, { number: "DL-1", status: "draft" }); };
   await assert.rejects(client(f).deals.actions.approve("DL-1"), AmenLifecycleError); assert.equal(calls, 1);
 });
-test("Origin sent on mutating requests", async () => {
-  const f = async (_u, init) => { assert.equal(init.headers.Origin, "https://sandbox-api.amnn.sa"); return json(201, { id: "w", secret_key: "s" }); };
+test("CSRF token (header + cookie) and Origin sent on mutating requests", async () => {
+  const f = async (_u, init) => { assert.equal(init.headers.Origin, "https://sandbox-api.amnn.sa"); assert.match(init.headers["X-CSRFToken"], /^[0-9a-f]{32}$/); assert.equal(init.headers.Cookie, `csrftoken=${init.headers["X-CSRFToken"]}`); return json(201, { id: "w", secret_key: "s" }); };
   assert.equal((await client(f).webhooks.create("https://example.com/hook")).secret_key, "s");
 });

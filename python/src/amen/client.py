@@ -1,6 +1,6 @@
 """AmenClient — the one place that knows about auth headers, base URL, timeouts and retries."""
 from __future__ import annotations
-import logging, random, time
+import logging, random, secrets, time
 from typing import Any
 import httpx
 from .config import Config, API_PREFIX
@@ -18,10 +18,14 @@ log = logging.getLogger("amen")
 class AmenClient:
     def __init__(self, config: Config | None = None, transport: httpx.BaseTransport | None = None):
         self.config = config or Config.from_env()
+        # Django CSRF double-submit: write endpoints require a csrftoken cookie whose
+        # value is echoed in the X-CSRFToken header (see docs/01-authentication.md).
+        self._csrf = secrets.token_hex(16)
         self._http = httpx.Client(
             base_url=self.config.base_url,
             headers={"X-API-Token": self.config.api_key, "Accept": "application/json",
-                     "User-Agent": "amen-starter-kit-python/0.1"},
+                     "User-Agent": "amen-starter-kit-python/0.1", "Accept-Language": "en"},
+            cookies={"csrftoken": self._csrf},
             timeout=self.config.timeout_s, transport=transport)
         log.info("AmenClient → %s (%s)", self.config.base_url, self.config.env)
         self.lookups, self.account = Lookups(self), AccountResource(self)
@@ -34,7 +38,8 @@ class AmenClient:
         url = API_PREFIX + path
         headers = {}
         if method in ("POST", "PUT", "DELETE"):
-            # Amen's API applies CSRF-style origin checks on mutating requests.
+            # Django CSRF: send the token both as the X-CSRFToken header and the csrftoken cookie.
+            headers["X-CSRFToken"] = self._csrf
             headers["Origin"] = headers["Referer"] = self.config.base_url
         attempt = 0
         while True:
