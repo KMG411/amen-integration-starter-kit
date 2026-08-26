@@ -15,9 +15,9 @@ Docs: https://docs.amnn.sa · Sandbox: `https://sandbox-api.amnn.sa` · Live: `h
 | Flutter / Dart 3 | [`flutter/`](flutter/) | ✅ Dart package + tests · sample app (proxy pattern) |
 | iOS / Swift 5.9 | [`swift/`](swift/) | ✅ SwiftPM package + tests · iOS proxy notes |
 | Postman | [`postman/`](postman/) | ✅ collection + environments |
-| Java 17 | `java/` | planned |
-| C# / .NET 8 | `csharp/` | planned |
-| Android / Kotlin | `kotlin/` | planned |
+| Java 17 (Maven) | [`java/`](java/) | ✅ client + examples + tests |
+| C# / .NET 8 | [`csharp/`](csharp/) | ✅ client + examples + tests |
+| Android / Kotlin (Gradle) | [`kotlin/`](kotlin/) | ✅ client + tests · Android proxy notes |
 
 > Every stack passes the same offline unit tests. Integration tests mirror `scenario/golden-path.yml` and run against the sandbox when `AMN_API_KEY` is set.
 
@@ -39,6 +39,11 @@ cd javascript && npm install && npm run example:golden-path
 cd php && composer install && php examples/01_golden_path.php
 cd flutter/amen_client && dart pub get && dart run example/golden_path.dart
 cd swift && swift run golden-path
+
+# Java · C# · Kotlin
+cd java && mvn -q compile exec:java
+cd csharp && dotnet run --project examples/GoldenPath
+cd kotlin && gradle :golden-path:run
 ```
 
 Each walks a product deal through `draft → requested → payment_pending → paid → executing → executed → completed → payout`, printing the deal status after each step. If the sandbox wallet has no balance, the run stops at `payment_pending` with a `NEEDS_TOP_UP` message and instructions.
