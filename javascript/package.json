@@ -6,8 +6,8 @@
   "type": "module",
   "engines": { "node": ">=20" },
   "scripts": {
-    "test:unit": "node --test \"tests/unit/*.test.js\"",
-    "test:integration": "node --test \"tests/integration/*.test.js\"",
+    "test:unit": "node --test tests/unit/client.test.js tests/unit/webhooks.test.js",
+    "test:integration": "node --test tests/integration/golden-path.test.js",
     "example:golden-path": "node examples/01_golden_path.js",
     "example:cancel": "node examples/02_cancel_and_dispute.js cancel",
     "example:withdrawal": "node examples/03_withdrawal.js",
