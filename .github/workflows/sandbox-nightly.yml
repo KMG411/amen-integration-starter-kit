@@ -27,3 +27,23 @@ jobs:
         with: { node-version: "20" }
       - run: npm ci
       - run: npm run test:integration
+  javascript-integration:
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: javascript } }
+    env: { AMN_ENV: sandbox, AMN_API_KEY: "${{ secrets.AMN_SANDBOX_API_KEY }}" }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: "20" }
+      - run: npm ci
+      - run: npm run test:integration
+  php-integration:
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: php } }
+    env: { AMN_ENV: sandbox, AMN_API_KEY: "${{ secrets.AMN_SANDBOX_API_KEY }}" }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with: { php-version: "8.2" }
+      - run: composer install --no-interaction --prefer-dist
+      - run: vendor/bin/phpunit tests/Integration

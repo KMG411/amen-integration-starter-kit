@@ -15,7 +15,7 @@ def _load_dotenv() -> None:
         return
     # Walk up from the current directory so examples/ and tests/ find the stack or kit-root .env
     here = Path.cwd().resolve()
-    for d in [here, *here.parents][:4]:
+    for d in [here, *here.parents][:3]:   # cwd, stack, kit root
         if (d / ".env").exists():
             load_dotenv(d / ".env", override=False)
 

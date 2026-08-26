@@ -30,3 +30,38 @@ jobs:
       - run: npm ci
       - run: npm run build
       - run: npm run test:unit
+  javascript:
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: javascript } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: "20" }
+      - run: npm ci
+      - run: npm run test:unit
+  php:
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: php } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with: { php-version: "8.2", extensions: curl, json }
+      - run: composer install --no-interaction --prefer-dist
+      - run: vendor/bin/phpunit tests/Unit
+  dart:
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: flutter/amen_client } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dart-lang/setup-dart@v1
+        with: { sdk: stable }
+      - run: dart pub get
+      - run: dart analyze --fatal-infos
+      - run: dart test
+  swift:
+    runs-on: macos-14
+    defaults: { run: { working-directory: swift } }
+    steps:
+      - uses: actions/checkout@v4
+      - run: swift build
+      - run: swift test

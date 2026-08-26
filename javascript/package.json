@@ -1,0 +1,17 @@
+{
+  "name": "amen-starter-kit-js",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Reference JavaScript (Node) client and examples for the Amen Platform API",
+  "type": "module",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "test:unit": "node --test \"tests/unit/*.test.js\"",
+    "test:integration": "node --test \"tests/integration/*.test.js\"",
+    "example:golden-path": "node examples/01_golden_path.js",
+    "example:cancel": "node examples/02_cancel_and_dispute.js cancel",
+    "example:withdrawal": "node examples/03_withdrawal.js",
+    "example:webhook": "node examples/04_webhook_receiver.js"
+  },
+  "dependencies": { "dotenv": "^16.4.5", "express": "^4.19.2" }
+}

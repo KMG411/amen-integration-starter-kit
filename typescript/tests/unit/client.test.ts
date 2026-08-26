@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { AmenClient, AmenApiError, AmenLifecycleError } from "../../src/amen/index.js";
 
 const json = (status: number, body: unknown) => new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
-const client = (fetchImpl: typeof fetch) => new AmenClient({ apiKey: "test-token", maxRetries: 1 }, fetchImpl);
+const client = (fetchImpl: typeof fetch) => new AmenClient({ apiKey: "test-token", baseUrl: "https://sandbox-api.amnn.sa", maxRetries: 1 }, fetchImpl);
 
 describe("AmenClient", () => {
   it("sends the auth header to the sandbox base URL", async () => {

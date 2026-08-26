@@ -1,0 +1,16 @@
+name: amen_sample_app
+description: Minimal Flutter app demonstrating the back-end proxy pattern for the Amen API.
+publish_to: none
+version: 0.1.0
+environment:
+  sdk: ^3.3.0
+dependencies:
+  flutter:
+    sdk: flutter
+  http: ^1.2.0
+  flutter_secure_storage: ^9.2.2
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+flutter:
+  uses-material-design: true

@@ -8,16 +8,18 @@ Docs: https://docs.amnn.sa · Sandbox: `https://sandbox-api.amnn.sa` · Live: `h
 
 | Stack | Folder | Status |
 |---|---|---|
-| Python 3.11 (`httpx`) | [`python/`](python/) | ✅ golden path |
-| TypeScript / Node 20 | [`typescript/`](typescript/) | ✅ golden path |
+| Python 3.11 (`httpx`) | [`python/`](python/) | ✅ client + examples + tests |
+| TypeScript / Node 20 | [`typescript/`](typescript/) | ✅ client + examples + tests |
+| JavaScript / Node 20 | [`javascript/`](javascript/) | ✅ client + examples + tests |
+| PHP 8.1+ (no deps, Laravel-ready) | [`php/`](php/) | ✅ client + examples + tests |
+| Flutter / Dart 3 | [`flutter/`](flutter/) | ✅ Dart package + tests · sample app (proxy pattern) |
+| iOS / Swift 5.9 | [`swift/`](swift/) | ✅ SwiftPM package + tests · iOS proxy notes |
 | Postman | [`postman/`](postman/) | ✅ collection + environments |
-| JavaScript (Node) | `javascript/` | planned |
-| PHP 8.2 | `php/` | planned |
 | Java 17 | `java/` | planned |
 | C# / .NET 8 | `csharp/` | planned |
-| iOS / Swift | `swift/` | planned |
 | Android / Kotlin | `kotlin/` | planned |
-| Flutter / Dart | `flutter/` | planned |
+
+> Every stack passes the same offline unit tests. Integration tests mirror `scenario/golden-path.yml` and run against the sandbox when `AMN_API_KEY` is set.
 
 ## 5-minute quick start
 
@@ -31,9 +33,15 @@ cd python && pip install -e ".[dev]" && python examples/01_golden_path.py
 
 # TypeScript
 cd typescript && npm install && npm run example:golden-path
+
+# JavaScript · PHP · Dart · Swift
+cd javascript && npm install && npm run example:golden-path
+cd php && composer install && php examples/01_golden_path.php
+cd flutter/amen_client && dart pub get && dart run example/golden_path.dart
+cd swift && swift run golden-path
 ```
 
-Both walk a product deal through `draft → requested → payment_pending → paid → executing → executed → completed → payout`, printing the deal status after each step. If the sandbox wallet has no balance, the run stops at `payment_pending` with a `NEEDS_TOP_UP` message and instructions.
+Each walks a product deal through `draft → requested → payment_pending → paid → executing → executed → completed → payout`, printing the deal status after each step. If the sandbox wallet has no balance, the run stops at `payment_pending` with a `NEEDS_TOP_UP` message and instructions.
 
 ## What's shared
 

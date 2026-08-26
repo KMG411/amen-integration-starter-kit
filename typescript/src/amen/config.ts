@@ -14,7 +14,7 @@ export interface Config {
 export function loadConfig(overrides: Partial<Config> = {}): Config {
   // Walk up from cwd so examples/ and tests/ find the stack or kit-root .env
   let dir = resolve(".");
-  for (let i = 0; i < 4; i++) { const p = resolve(dir, ".env"); if (existsSync(p)) dotenv({ path: p, override: false }); dir = resolve(dir, ".."); }
+  for (let i = 0; i < 3; i++) { const p = resolve(dir, ".env"); if (existsSync(p)) dotenv({ path: p, override: false }); dir = resolve(dir, ".."); }
   const env = (process.env.AMN_ENV ?? "sandbox").toLowerCase() as Env;
   if (!(env in BASE_URLS)) throw new Error(`AMN_ENV must be 'sandbox' or 'live', got '${env}'`);
   const apiKey = overrides.apiKey ?? process.env.AMN_API_KEY;

@@ -7,4 +7,8 @@ All notable changes to this kit. Format: [Keep a Changelog](https://keepachangel
 - Repository skeleton: shared OpenAPI spec (v1.0), error catalogue (100 codes), golden-path scenario, docs 01–09, Postman collection + environments.
 - Python reference implementation (`python/`).
 - TypeScript reference implementation (`typescript/`).
+- JavaScript (Node) reference implementation (`javascript/`).
+- PHP reference implementation, zero runtime dependencies (`php/`).
+- Flutter/Dart: pure-Dart `amen_client` package + sample app demonstrating the back-end proxy pattern (`flutter/`).
+- Swift: SwiftPM `AmenClient` package + CLI golden path + iOS proxy notes (`swift/`).
 - CI: unit tests, gitleaks, nightly sandbox run, weekly spec-drift check.
