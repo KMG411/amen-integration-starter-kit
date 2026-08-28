@@ -8,6 +8,7 @@ Format: **Symptom → Check → Cause → Fix**
 | `403 api_access__disabled` | — | API access not enabled for this account | contact Amen |
 | `400` on `action/submit` | deal has buyer **and** seller; product deal has delivery address | parties/address missing | call `parties/` and `delivery-address` first |
 | `400 price__required` on approve | `offer_type` | service deals need a final price | pass `{ "price": "…" }` |
+| `400 offer_delivery_fee__required` on create, even when sent | the value | sandbox treats `"0.00"` as missing | send a positive fee, e.g. `"10.00"` |
 | deal stuck in `payment_pending` | `allowed-payment-methods/` | wallet not allowed / no balance; online checkout not completed | top up sandbox wallet or complete HyperPay checkout |
 | `429` | request rate | burst of calls | client backoff; batch work |
 | webhook signature mismatch | you verify the **raw** body? | body re-serialised before verification | verify bytes first, parse second |

@@ -33,7 +33,7 @@ category = amen.lookups.categories()[0]["id"]
 city = amen.lookups.cities()[0]["id"]
 deal = amen.deals.create(offer_type="product", offer_category=category, offer_title="Starter Kit golden path",
                          offer_description="Reference deal created by the Amen integration starter kit",
-                         offer_price="100.00", offer_delivery_fee="0.00")
+                         offer_price="100.00", offer_delivery_fee="10.00")
 n = deal.number
 step(f"deal {n} created", deal)
 step("parties", amen.deals.set_parties(n, buyers=[buyer.number], sellers=[seller.number]))
