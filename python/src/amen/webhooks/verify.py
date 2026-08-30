@@ -1,22 +1,33 @@
-"""Webhook signature verification over the RAW request body.
+"""Webhook signature verification.
 
-The header name and algorithm are a single configuration point here so they can be
-updated once the Amen team confirms the final scheme (see docs/04-webhooks.md).
+Verified against real Amen sandbox deliveries (2026-08-30). Amen signs the
+**timestamp and the raw body together**, Stripe-style:
+
+    signed_message = f"{X-Webhook-Timestamp}.{raw_body}"
+    X-Webhook-Signature: sha256=HMAC_SHA256(secret, signed_message)
+
+Always feed the RAW bytes and the timestamp header straight from the request —
+re-serialising the JSON changes the bytes and breaks the signature.
 """
 from __future__ import annotations
 import hashlib, hmac
 
-SIGNATURE_HEADER = "X-Signature"      # configuration point
-ALGORITHM = "sha256"                  # configuration point
+SIGNATURE_HEADER = "X-Webhook-Signature"
+TIMESTAMP_HEADER = "X-Webhook-Timestamp"
+EVENT_HEADER = "X-Webhook-Event"
+ALGORITHM = "sha256"
 
 
-def compute_signature(secret: str, raw_body: bytes, algorithm: str = ALGORITHM) -> str:
-    return hmac.new(secret.encode(), raw_body, getattr(hashlib, algorithm)).hexdigest()
+def compute_signature(secret: str, timestamp: str, raw_body: bytes, algorithm: str = ALGORITHM) -> str:
+    message = timestamp.encode() + b"." + raw_body
+    return hmac.new(secret.encode(), message, getattr(hashlib, algorithm)).hexdigest()
 
 
-def verify_signature(secret: str, raw_body: bytes, received: str | None, algorithm: str = ALGORITHM) -> bool:
-    """Constant-time comparison. Accepts hex digests, optionally prefixed like 'sha256=<hex>'."""
-    if not received:
+def verify_signature(secret: str, timestamp: str | None, raw_body: bytes, received: str | None,
+                     algorithm: str = ALGORITHM) -> bool:
+    """Constant-time comparison. `received` may be prefixed like 'sha256=<hex>'."""
+    if not received or not timestamp:
         return False
     received = received.split("=", 1)[1] if "=" in received else received
-    return hmac.compare_digest(compute_signature(secret, raw_body, algorithm), received.strip().lower())
+    expected = compute_signature(secret, timestamp, raw_body, algorithm)
+    return hmac.compare_digest(expected, received.strip().lower())

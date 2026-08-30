@@ -2,7 +2,7 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass
 from typing import Any, Callable
-from .verify import verify_signature, SIGNATURE_HEADER
+from .verify import verify_signature, SIGNATURE_HEADER, TIMESTAMP_HEADER
 
 
 @dataclass
@@ -23,14 +23,17 @@ class WebhookHandler:
         self.secret, self.on_event, self.seen = secret, on_event, seen if seen is not None else set()
 
     def handle(self, headers: dict[str, str], raw_body: bytes) -> tuple[int, dict]:
-        sig = next((v for k, v in headers.items() if k.lower() == SIGNATURE_HEADER.lower()), None)
-        if not verify_signature(self.secret, raw_body, sig):
+        h = {k.lower(): v for k, v in headers.items()}
+        sig = h.get(SIGNATURE_HEADER.lower())
+        timestamp = h.get(TIMESTAMP_HEADER.lower())
+        if not verify_signature(self.secret, timestamp, raw_body, sig):
             return 401, {"error": "invalid signature"}
         try:
             payload = json.loads(raw_body)
         except ValueError:
             return 400, {"error": "invalid json"}
-        event = WebhookEvent(id=str(payload.get("id") or payload.get("event_id") or ""),
+        # Amen deliveries carry no event id; the event timestamp is unique per delivery.
+        event = WebhookEvent(id=str(payload.get("timestamp") or timestamp or ""),
                              type=payload.get("event") or payload.get("type"), data=payload, raw=raw_body)
         if event.id and event.id in self.seen:
             return 200, {"ok": True, "duplicate": True}
