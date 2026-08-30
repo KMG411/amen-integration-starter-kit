@@ -29,7 +29,7 @@ class WebhookTest {
 
     @Test void signatureRoundtripAndTamper() {
         String ts = "2026-08-30T18:53:23.885957+00:00";
-        byte[] body = "{\"event\":\"deal.status.changed\",\"timestamp\":\"" + ts + "\"}".getBytes(StandardCharsets.UTF_8);
+        byte[] body = ("{\"event\":\"deal.status.changed\",\"timestamp\":\"" + ts + "\"}").getBytes(StandardCharsets.UTF_8);
         String sig = WebhookSignature.compute(SECRET, ts, body);
         assertTrue(sig.startsWith("sha256="));
         assertTrue(WebhookSignature.verify(SECRET, ts, body, sig));
