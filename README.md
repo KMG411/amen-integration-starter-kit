@@ -21,9 +21,12 @@ Docs: https://docs.amnn.sa · Sandbox: `https://sandbox-api.amnn.sa` · Live: `h
 
 > Every stack passes the same offline unit tests. Integration tests mirror `scenario/golden-path.yml` and run against the sandbox when `AMN_API_KEY` is set.
 
-## Partner Integration Guide
+> **Verified against the live sandbox.** The full golden path — create → pay → execute → complete → seller payout — has been run end to end against the real Amen sandbox, and each step's webhook was received and its signature verified. The real-world behaviours this exposed (write-protection/CSRF, `Accept-Language`, ISO vs epoch timestamps, delivery-fee-must-be-positive, and the exact webhook signature scheme) are documented in `docs/` and handled by every client.
 
-New to the Amen API? Read the **[Partner Integration Guide (PDF)](docs/guide/Amen_API_Partner_Integration_Guide.pdf)** — a 15-minute handbook covering the escrow lifecycle, your first sandbox deal, how to copy the reference into your codebase, payments, webhooks, errors, mobile/dashboard patterns and a go-live checklist. Source: `docs/guide/partner-integration-guide.html`.
+## Guides
+
+- **[Developer Guide (PDF)](docs/guide/Amen_API_Developer_Guide.pdf)** — how to *use this repository*: setup, choosing a stack, the integration workflow, the verified real-API behaviours, webhooks, testing, security and a go-live checklist. Source: `docs/guide/developer-guide.html`.
+- **[Partner Integration Guide (PDF)](docs/guide/Amen_API_Partner_Integration_Guide.pdf)** — a 15-minute handbook covering the escrow lifecycle, your first sandbox deal, payments, webhooks, errors, mobile/dashboard patterns and a go-live checklist. Source: `docs/guide/partner-integration-guide.html`.
 
 ## 5-minute quick start
 
