@@ -19,7 +19,7 @@ class GoldenPathIT {
         assumeTrue(a.config.env().equals("sandbox"), "sandbox only");
         Customer buyer = a.customers().create(new CreateCustomer("Buyer", "Kit", "SA", phone("57")));
         Customer seller = a.customers().create(new CreateCustomer("Seller", "Kit", "SA", phone("58")));
-        Deal deal = a.deals().create(new CreateDeal("product", "Starter Kit golden path").category(a.lookups().categories().get(0).id()).price("100.00").deliveryFee("0.00")
+        Deal deal = a.deals().create(new CreateDeal("product", "Starter Kit golden path").category(a.lookups().categories().get(0).id()).price("100.00").deliveryFee("10.00")
             .description("Reference deal created by the Amen integration starter kit"));
         String n = deal.number(); assertEquals("draft", deal.status());
         assertEquals("draft", a.deals().setParties(n, List.of(buyer.number()), List.of(seller.number())).status());

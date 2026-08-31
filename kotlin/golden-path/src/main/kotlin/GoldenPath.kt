@@ -22,7 +22,7 @@ fun main(args: Array<String>) = runBlocking {
     val seller = amen.customers.create(CreateCustomer("Seller", "Kit", "SA", phone("58")))
     step("customers ${buyer.number} (buyer), ${seller.number} (seller)")
     val category = amen.lookups.categories().first().id; val city = amen.lookups.cities().first().id
-    val deal = amen.deals.create(CreateDeal("product", "Starter Kit golden path", offerPrice = "100.00", offerDeliveryFee = "0.00", offerCategory = category, offerDescription = "Reference deal created by the Amen integration starter kit"))
+    val deal = amen.deals.create(CreateDeal("product", "Starter Kit golden path", offerPrice = "100.00", offerDeliveryFee = "10.00", offerCategory = category, offerDescription = "Reference deal created by the Amen integration starter kit"))
     val n = deal.number; step("deal $n created", deal)
     step("parties", amen.deals.setParties(n, listOf(buyer.number), listOf(seller.number)))
     step("delivery address", amen.deals.setDeliveryAddress(n, Address(city, "King Fahd Rd", "1234", "12211", "Al Olaya", "1")))

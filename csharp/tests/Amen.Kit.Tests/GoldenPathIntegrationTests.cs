@@ -14,7 +14,7 @@ public class GoldenPathIntegrationTests
         if (a.Config.Env != "sandbox") return;
         var buyer = await a.Customers.CreateAsync(new("Buyer", "Kit", "SA", Phone("57")));
         var seller = await a.Customers.CreateAsync(new("Seller", "Kit", "SA", Phone("58")));
-        var deal = await a.Deals.CreateAsync(new("product", "Starter Kit golden path") { OfferCategory = (await a.Lookups.CategoriesAsync())![0].Id, OfferPrice = "100.00", OfferDeliveryFee = "0.00", OfferDescription = "Reference deal created by the Amen integration starter kit" });
+        var deal = await a.Deals.CreateAsync(new("product", "Starter Kit golden path") { OfferCategory = (await a.Lookups.CategoriesAsync())![0].Id, OfferPrice = "100.00", OfferDeliveryFee = "10.00", OfferDescription = "Reference deal created by the Amen integration starter kit" });
         var n = deal.Number; Assert.Equal("draft", deal.Status);
         Assert.Equal("draft", (await a.Deals.SetPartiesAsync(n, [buyer.Number], [seller.Number])).Status);
         Assert.Equal("draft", (await a.Deals.SetDeliveryAddressAsync(n, new((await a.Lookups.CitiesAsync())![0].Id, "King Fahd Rd", "1234", "12211", "Al Olaya", "1"))).Status);

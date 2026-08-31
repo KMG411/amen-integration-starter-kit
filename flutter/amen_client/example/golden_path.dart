@@ -23,7 +23,7 @@ Future<void> main(List<String> args) async {
   final category = (await amen.lookups.categories()).first['id'] as int;
   final city = (await amen.lookups.cities()).first['id'] as int;
   final deal = await amen.deals.create(offerType: 'product', offerCategory: category, offerTitle: 'Starter Kit golden path',
-      offerDescription: 'Reference deal created by the Amen integration starter kit', offerPrice: '100.00', offerDeliveryFee: '0.00');
+      offerDescription: 'Reference deal created by the Amen integration starter kit', offerPrice: '100.00', offerDeliveryFee: '10.00');
   final n = deal.number; step('deal $n created', deal);
   step('parties', await amen.deals.setParties(n, buyers: [buyer.number], sellers: [seller.number]));
   step('delivery address', await amen.deals.setDeliveryAddress(n, city: city, district: 'Al Olaya', street: 'King Fahd Rd', buildingNumber: '1234', unitNumber: '1', zipCode: '12211'));

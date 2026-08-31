@@ -12,7 +12,7 @@ fixtures:
     offer_title: Starter Kit golden path
     offer_description: Reference deal created by the Amen integration starter kit
     offer_price: "100.00"
-    offer_delivery_fee: "0.00"
+    offer_delivery_fee: "10.00"
   delivery_address:
     district: Al Olaya
     street: King Fahd Rd

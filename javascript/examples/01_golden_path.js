@@ -16,7 +16,7 @@ const seller = await amen.customers.create({ first_name: "Seller", last_name: "K
 step(`customers ${buyer.number} (buyer), ${seller.number} (seller)`);
 const [category] = await amen.lookups.categories(); const [city] = await amen.lookups.cities();
 const deal = await amen.deals.create({ offer_type: "product", offer_category: category.id, offer_title: "Starter Kit golden path",
-  offer_description: "Reference deal created by the Amen integration starter kit", offer_price: "100.00", offer_delivery_fee: "0.00" });
+  offer_description: "Reference deal created by the Amen integration starter kit", offer_price: "100.00", offer_delivery_fee: "10.00" });
 const n = deal.number; step(`deal ${n} created`, deal);
 step("parties", await amen.deals.setParties(n, { buyers: [buyer.number], sellers: [seller.number] }));
 step("delivery address", await amen.deals.setDeliveryAddress(n, { city: city.id, district: "Al Olaya", street: "King Fahd Rd", building_number: "1234", unit_number: "1", zip_code: "12211" }));

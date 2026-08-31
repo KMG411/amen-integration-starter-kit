@@ -15,7 +15,7 @@ def test_golden_path(sandbox):
     assert buyer.number and seller.number
 
     deal = amen.deals.create(offer_type="product", offer_category=amen.lookups.categories()[0]["id"],
-                             offer_title="Starter Kit golden path", offer_price="100.00", offer_delivery_fee="0.00",
+                             offer_title="Starter Kit golden path", offer_price="100.00", offer_delivery_fee="10.00",
                              offer_description="Reference deal created by the Amen integration starter kit")
     n = deal.number
     assert deal.status == "draft"

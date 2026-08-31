@@ -20,7 +20,7 @@ var buyer = await amen.Customers.CreateAsync(new("Buyer", "Kit", "SA", Phone("57
 var seller = await amen.Customers.CreateAsync(new("Seller", "Kit", "SA", Phone("58")));
 Step($"customers {buyer.Number} (buyer), {seller.Number} (seller)");
 var category = (await amen.Lookups.CategoriesAsync())![0].Id; var city = (await amen.Lookups.CitiesAsync())![0].Id;
-var deal = await amen.Deals.CreateAsync(new("product", "Starter Kit golden path") { OfferCategory = category, OfferPrice = "100.00", OfferDeliveryFee = "0.00", OfferDescription = "Reference deal created by the Amen integration starter kit" });
+var deal = await amen.Deals.CreateAsync(new("product", "Starter Kit golden path") { OfferCategory = category, OfferPrice = "100.00", OfferDeliveryFee = "10.00", OfferDescription = "Reference deal created by the Amen integration starter kit" });
 var n = deal.Number; Step($"deal {n} created", deal);
 Step("parties", await amen.Deals.SetPartiesAsync(n, [buyer.Number], [seller.Number]));
 Step("delivery address", await amen.Deals.SetDeliveryAddressAsync(n, new(city, "King Fahd Rd", "1234", "12211", "Al Olaya", "1")));

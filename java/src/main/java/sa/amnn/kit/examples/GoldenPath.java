@@ -19,7 +19,7 @@ public final class GoldenPath {
         Customer seller = amen.customers().create(new CreateCustomer("Seller", "Kit", "SA", phone("58")));
         step("customers " + buyer.number() + " (buyer), " + seller.number() + " (seller)", null);
         int category = amen.lookups().categories().get(0).id(), city = amen.lookups().cities().get(0).id();
-        Deal deal = amen.deals().create(new CreateDeal("product", "Starter Kit golden path").category(category).price("100.00").deliveryFee("0.00")
+        Deal deal = amen.deals().create(new CreateDeal("product", "Starter Kit golden path").category(category).price("100.00").deliveryFee("10.00")
             .description("Reference deal created by the Amen integration starter kit"));
         String n = deal.number(); step("deal " + n + " created", deal);
         step("parties", amen.deals().setParties(n, List.of(buyer.number()), List.of(seller.number())));

@@ -20,7 +20,7 @@ let buyer = try await amen.customers.create(.init(firstName: "Buyer", lastName: 
 let seller = try await amen.customers.create(.init(firstName: "Seller", lastName: "Kit", phoneCode: "SA", phoneNumber: phone("58")))
 step("customers \(buyer.number) (buyer), \(seller.number) (seller)")
 let category = try await amen.lookups.categories()[0].id, city = try await amen.lookups.cities()[0].id
-let deal = try await amen.deals.create(.init(offerType: .product, offerTitle: "Starter Kit golden path", offerPrice: "100.00", offerDeliveryFee: "0.00", offerCategory: category, offerDescription: "Reference deal created by the Amen integration starter kit"))
+let deal = try await amen.deals.create(.init(offerType: .product, offerTitle: "Starter Kit golden path", offerPrice: "100.00", offerDeliveryFee: "10.00", offerCategory: category, offerDescription: "Reference deal created by the Amen integration starter kit"))
 let n = deal.number; step("deal \(n) created", deal)
 step("parties", try await amen.deals.setParties(n, buyers: [buyer.number], sellers: [seller.number]))
 step("delivery address", try await amen.deals.setDeliveryAddress(n, .init(city: city, street: "King Fahd Rd", buildingNumber: "1234", zipCode: "12211", district: "Al Olaya", unitNumber: "1")))
