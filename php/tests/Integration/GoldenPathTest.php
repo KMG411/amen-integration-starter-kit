@@ -21,7 +21,7 @@ final class GoldenPathTest extends TestCase
         $buyer = $a->customers->create(['first_name' => 'Buyer', 'last_name' => 'Kit', 'phone_code' => 'SA', 'phone_number' => self::phone('57')]);
         $seller = $a->customers->create(['first_name' => 'Seller', 'last_name' => 'Kit', 'phone_code' => 'SA', 'phone_number' => self::phone('58')]);
         $deal = $a->deals->create(['offer_type' => 'product', 'offer_category' => $a->lookups->categories()[0]['id'], 'offer_title' => 'Starter Kit golden path',
-            'offer_description' => 'Reference deal created by the Amen integration starter kit', 'offer_price' => '100.00', 'offer_delivery_fee' => '0.00']);
+            'offer_description' => 'Reference deal created by the Amen integration starter kit', 'offer_price' => '100.00', 'offer_delivery_fee' => '10.00']);
         $n = $deal['number']; $this->assertSame('draft', $deal['status']);
         $this->assertSame('draft', $a->deals->setParties($n, [$buyer['number']], [$seller['number']])['status']);
         $this->assertSame('draft', $a->deals->setDeliveryAddress($n, ['city' => $a->lookups->cities()[0]['id'], 'district' => 'Al Olaya', 'street' => 'King Fahd Rd', 'building_number' => '1234', 'unit_number' => '1', 'zip_code' => '12211'])['status']);
